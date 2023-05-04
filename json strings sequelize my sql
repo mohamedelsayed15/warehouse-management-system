@@ -1,0 +1,36 @@
+ //appemd array with sequlize syntax
+ // await User.update(
+        //     {
+        //     tokens: Sequelize.fn(
+        //         'JSON_ARRAY_APPEND',
+        //         Sequelize.col('tokens'),
+        //         '$',
+        //         token
+        //     ),
+        //     },
+        //     {
+        //     where: { id: user.id },
+        //     }
+        // )
+        
+        
+        //manipulating an array with my sql syntax
+         // Add a token to the user's tokens array
+        await User.update(
+        {
+            tokens: sequelize.literal(`JSON_ARRAY_APPEND(tokens, '$', "${token}")`)
+        },
+        {
+            where: { id: 1 }
+        }
+        );
+
+        // Filter the user's tokens array
+        await User.update(
+        {
+            tokens: sequelize.literal(`JSON_REMOVE(tokens, JSON_UNQUOTE(JSON_SEARCH(tokens, 'one', "${token}" )))`)
+        },
+        {
+            where: { id: 1 }
+        }
+        );
