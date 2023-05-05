@@ -41,3 +41,12 @@ exports.validateLogin = [
         .trim()
         .withMessage('enter a valid email'),
 ]
+
+exports.validateProduct = [
+    body('name')
+        .isLength({ min: 8 })
+        .withMessage("name cant be less than 8 characters"),
+    body('description')
+        .isLength({ min: 12 })
+        .withMessage("description cant be less than 12 characters")
+]

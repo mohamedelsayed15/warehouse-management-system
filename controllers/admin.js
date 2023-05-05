@@ -3,21 +3,45 @@ const User = require('../models/user')
 const { validationResult } = require('express-validator')
 const bcrypt = require('bcryptjs')
 const sequelize = require('../util/mysql')
-exports.createSupervisor = async (req, res, next) => {
+const WareHouse = require('../models/warehouse')
+const Product = require('../models/product')
+const fs = require('fs')
+const path = require('path')
+
+exports.createSupervisorForWarehouse = async (req, res, next) => {
     try {
         const errors = validationResult(req)
-        console.log(errors)
+
         if (!errors.isEmpty()) {
             return res.status(422).send({
                 validationError: errors
             })
         }
+        const warehouseId = req.params.warehouseId
 
-        await User.create({
+        console.log(warehouseId)
+
+        const warehouse = await WareHouse.findByPk(warehouseId)
+
+        console.log(warehouse)
+
+        if (!warehouse) {
+            return res.status(404).send({
+                error: "couldn't find warehouse"
+            })
+        }
+
+        const supervisor = await warehouse.createUser({
             email: req.body.email,
             password: req.body.password,
             type: "supervisor"
         })
+
+        // await User.create({
+        //     email: req.body.email,
+        //     password: req.body.password,
+        //     type: "supervisor"
+        // })
 
         res.status(201).send({
             message: "created"
@@ -170,7 +194,10 @@ exports.loginAdmin = async (req, res, next) => {
         }
 
         const token = await jwt.sign({ id: user.id }, process.env.JWT_SECRET)
-        
+
+
+        // mysql query to manipulate json data
+        // append to tokens array in user
         await User.update(
             {
                 tokens: sequelize.literal(`JSON_ARRAY_APPEND(tokens, '$', "${token}")`)
@@ -186,6 +213,102 @@ exports.loginAdmin = async (req, res, next) => {
         res.status(200).send({ user, token })
 
     }catch(e) {
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
+exports.createWarehouse = async (req, res, next) => {
+    try {
+        const errors = validationResult(req)
+
+        if (!errors.isEmpty()) {
+            return res.status(422).send({
+                validationError: errors
+            })
+        }
+        const warehouse = await WareHouse.create({
+            name: req.body.name,
+            location: req.body.location,
+        })
+
+        res.status(201).send({
+            message: "created"
+        })
+    }catch (e) {
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
+
+exports.addProduct = async (req,res,next) => {
+    try {
+        const errors = validationResult(req)
+
+        if (!errors.isEmpty()) {
+            return res.status(422).send({
+                validationError: errors
+            })
+        }
+
+        if (!req.file) {
+            res.status(422).send({
+                error : "couldn't receive your image"
+            })
+        }
+        // total stock is counted each time the product gets 
+        //increased and decreased in a warehouse 
+        const product = await Product.create({
+            name: req.body.name,
+            description : req.body.description,
+            image : req.file.path,
+            //stock: by developer
+        })
+        res.status(201).send({
+            message: "created"
+        })
+    } catch (e) {
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
+exports.serveProductImage = async (req,res,next) => {
+    try {
+        const errors = validationResult(req)
+
+        if (!errors.isEmpty()) {
+            return res.status(422).send({
+                validationError: errors
+            })
+        }
+        const productId = req.params.productId
+        
+        const product = await Product.findByPk(productId)
+
+        if (!product) {
+            return res.status(404).send({
+                error: "couldn't find product"
+            })
+        }
+
+        const imagePath = product.image
+
+        const image = fs.createReadStream(imagePath)
+
+        image.on('error', function (error) {
+            return next(error)
+        })
+
+        res.setHeader("Content-Type", "image/png")
+        
+        image.pipe(res)
+
+    } catch (e) {
         console.log(e)
         const error = new Error(e)
         error.httpStatusCode = 500

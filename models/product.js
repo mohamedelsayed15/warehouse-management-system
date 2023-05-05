@@ -18,11 +18,12 @@ const Product = sequelize.define('product', {
     },
     image: {
         type: DataTypes.STRING,
-        allowNull: false,
+        //allowNull: false,
     },
     stock: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        //allowNull: false,
+        defaultValue: 0,
     }
 })
 

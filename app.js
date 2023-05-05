@@ -1,7 +1,6 @@
 const express = require('express')
 //================ DB connection ==============
 const sequelize = require('./util/mysql')
-const Sequelize = require('sequelize')
 //=============== Calling Routes ==============
 const adminRoutes = require('./routes/admin')
 const supervisorRoutes = require('./routes/supervisor')
@@ -9,6 +8,7 @@ const supervisorRoutes = require('./routes/supervisor')
 const User = require('./models/user')
 const WareHouse = require('./models/warehouse')
 const Product = require('./models/product')
+const WarehouseProduct = require('./models/WarehouseProduct')
 //========== Express ============
 const app = express()
 //========== Parsers ============
@@ -16,7 +16,7 @@ app.use(express.json({ limit: "3kb" })); //parser//json data size limitation
 //========== Routes =============
 
 app.use('/admin',adminRoutes)
-//app.use('/supervisor', supervisorRoutes)
+app.use('/supervisor', supervisorRoutes)
 
 app.use('/', (req, res) => {
     res.send("warehouse management system")
@@ -59,9 +59,32 @@ app.use('/*', (req, res, next) => {
     }
 })
 //=============== Relations ==============
-
-//===============  Sync DB  ==============
-const jwt = require('jsonwebtoken')
+// one to many relation between user(supervisor) and warehouse
+// a warehouse can be assigned to more than one user
+// a user can only be assigned to one warehouse
+User.belongsTo(WareHouse, { constraints: true, onDelete: 'CASCADE' })
+WareHouse.hasMany(User)
+// many to many relation between warehouse and product
+// a product can be in many warehouses through WarehouseProduct(quantity)
+// a warehouse has more than a one product
+// we perform N:M relation between both entities in 2 different ways 
+// so we have a full access to all sequelize queries
+//first approach
+WareHouse.hasMany(WarehouseProduct)
+WarehouseProduct.belongsTo(WareHouse)
+Product.hasMany(WarehouseProduct)
+WarehouseProduct.belongsTo(Product)
+//second approach
+WareHouse.belongsToMany(Product, { through: WarehouseProduct })
+Product.belongsToMany(WareHouse, { through: WarehouseProduct })
+// we get full access to 
+// User.findAll({ include: Profile }); Many-to-Many
+// Profile.findAll({ include: User }); Many-to-Many
+// User.findAll({ include: Grant }); double One-to-Man
+// Profile.findAll({ include: Grant }); double One-to-Man
+// Grant.findAll({ include: User }); double One-to-Man
+// Grant.findAll({ include: Profile }); double One-to-Man
+//===============  Sync DB  ============== 
 sequelize.sync()//{force : true}//during development only
     .then(async () => {
         // const user = await User.create({
@@ -69,32 +92,6 @@ sequelize.sync()//{force : true}//during development only
         //     password: "123456789",
         //     type:"admin"
         // })
-        const user = await User.findOne({ where: { email: process.env.TOP_ADMIN_EMAIL } })
-        user.tokens = []
-        await user.save()
-        const token = await jwt.sign({ id: user.id }, process.env.JWT_SECRET)
-
-        // // Add an email address to the user's tokens array
-        await User.update(
-        {
-            tokens: sequelize.literal(`JSON_ARRAY_APPEND(tokens, '$', "${token}")`)
-        },
-        {
-            where: { id: 1 }
-        }
-        );
-
-        // // Filter the user's tokens array
-        // await User.update(
-        // {
-        //     tokens: sequelize.literal(`JSON_REMOVE(tokens, JSON_UNQUOTE(JSON_SEARCH(tokens, 'one', "${token}" )))`)
-        // },
-        // {
-        //     where: { id: 1 }
-        // }
-        // );
-        
-        console.log(token)
     }).catch((err) => {
         console.log(err)
     })
