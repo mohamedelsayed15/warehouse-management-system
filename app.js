@@ -9,11 +9,12 @@ const User = require('./models/user')
 const WareHouse = require('./models/warehouse')
 const Product = require('./models/product')
 const WarehouseProduct = require('./models/WarehouseProduct')
+const { Order, OrderItem } = require('./models/orders')
 //========== Express ============
 const app = express()
 //========== Parsers ============
 app.use(express.json({ limit: "3kb" })); //parser//json data size limitation
-//========== Routes =============
+//==========  Routes ============
 
 app.use('/admin',adminRoutes)
 app.use('/supervisor', supervisorRoutes)
@@ -84,6 +85,35 @@ Product.belongsToMany(WareHouse, { through: WarehouseProduct })
 // Profile.findAll({ include: Grant }); double One-to-Man
 // Grant.findAll({ include: User }); double One-to-Man
 // Grant.findAll({ include: Profile }); double One-to-Man
+// orders to be approved
+// //first approach
+// User.hasMany(Order)
+// Order.belongsTo(User)
+// Product.hasMany(Order)
+// Order.belongsTo(Product)
+// //second approach
+User.belongsToMany(Order, { through: OrderItem })
+Order.belongsToMany(User, { through: OrderItem })
+Order.belongsTo(User,{ constraints: true, onDelete: 'CASCADE' })
+User.hasMany(Order)
+// User.hasMany(OrderItem)
+// OrderItem.belongsTo(User)
+// Order.hasMany(OrderItem)
+// OrderItem.belongsTo(Order,{ constraints: true, onDelete: 'CASCADE' })
+// Product.belongsToMany(Order, { through: OrderItem })
+// Order.belongsToMany(Product, { through: OrderItem })
+// Product.hasMany(OrderItem)
+// OrderItem.belongsTo(Product,{ constraints: true, onDelete: 'CASCADE' })
+// Order.hasMany(OrderItem)
+// OrderItem.belongsTo(Order,{ constraints: true, onDelete: 'CASCADE' })
+Order.belongsTo(User, { constraints: true, onDelete: 'CASCADE' })
+User.hasMany(Order)
+//Many to Many M:N we resolve many to many by a third table
+Order.belongsToMany(Product, { through: OrderItem })// this can be a custom table or a sequelize
+Product.belongsToMany(Order, { through: OrderItem })// made table by inputting text instead of table
+OrderItem.belongsTo(Order, { constraints: true, onDelete: 'CASCADE' })
+Order.hasMany(OrderItem)
+OrderItem.belongsTo(Product, { constraints: true, onDelete: 'CASCADE' })
 //===============  Sync DB  ============== 
 sequelize.sync()//{force : true}//during development only
     .then(async () => {
@@ -91,6 +121,15 @@ sequelize.sync()//{force : true}//during development only
         //     email: process.env.TOP_ADMIN_EMAIL,
         //     password: "123456789",
         //     type:"admin"
+        // })
+        // const warehouse = await WareHouse.create({
+        //     name: "naser city",
+        //     location: "naser city, cairo egypt"
+        // })
+        // const supervisor = warehouse.createUser({
+        //     email: "mo.eert21654@gmail.com",
+        //     password: "15d198799",
+        //     type: "supervisor"
         // })
     }).catch((err) => {
         console.log(err)

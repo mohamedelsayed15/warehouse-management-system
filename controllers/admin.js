@@ -7,6 +7,82 @@ const WareHouse = require('../models/warehouse')
 const Product = require('../models/product')
 const fs = require('fs')
 const path = require('path')
+const { deleteFile }= require('../util/file')
+
+exports.loginAdmin = async (req, res, next) => {
+    try {
+        const errors = validationResult(req)
+
+        if (!errors.isEmpty()) {
+            return res.status(422).send({
+                validationError: errors
+            })
+        }
+
+        const user = await User.findOne({ where: { email: req.body.email } })
+
+        if (!user) {
+            return res.status(404).send({
+                error: "couldn't find a user"
+            })
+        }
+        if (user.active === false) {
+            return res.status(401).send({
+                error:"unauthorized"
+            })
+        }
+
+        const match = await bcrypt.compare(req.body.password, user.password)
+
+        if (match === false) {
+            return res.status(404).send({
+                error: "couldn't find a user"
+            })
+        }
+
+        const token = await jwt.sign({ id: user.id }, process.env.JWT_SECRET)
+
+        // mysql query to manipulate json data
+        // append to tokens array in user
+        await User.update({
+                tokens: sequelize.literal(`JSON_ARRAY_APPEND(tokens, '$', "${token}")`)
+            },{
+                where: { id: user.id }
+            })
+
+        user.password = ""
+        user.tokens = []
+
+        res.status(200).send({ user, token })
+
+    }catch(e) {
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
+
+exports.logoutAdmin = async (req, res, next) => {
+    try {
+        // Filter the user's tokens array
+        await User.update({
+            tokens: sequelize.literal(`JSON_REMOVE(tokens, JSON_UNQUOTE(JSON_SEARCH(tokens, 'one', "${req.token}" )))`)
+        },{
+            where: { id: req.user.id }
+        })
+
+        res.status(200).send({
+            message: "logged out"
+        })
+
+    }catch(e){
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
 
 exports.createSupervisorForWarehouse = async (req, res, next) => {
     try {
@@ -19,11 +95,7 @@ exports.createSupervisorForWarehouse = async (req, res, next) => {
         }
         const warehouseId = req.params.warehouseId
 
-        console.log(warehouseId)
-
         const warehouse = await WareHouse.findByPk(warehouseId)
-
-        console.log(warehouse)
 
         if (!warehouse) {
             return res.status(404).send({
@@ -37,12 +109,6 @@ exports.createSupervisorForWarehouse = async (req, res, next) => {
             type: "supervisor"
         })
 
-        // await User.create({
-        //     email: req.body.email,
-        //     password: req.body.password,
-        //     type: "supervisor"
-        // })
-
         res.status(201).send({
             message: "created"
         })
@@ -54,6 +120,7 @@ exports.createSupervisorForWarehouse = async (req, res, next) => {
         return next(error)
     }
 }
+
 exports.createAdmin = async (req, res, next) => {
     try {
         const errors = validationResult(req)
@@ -85,6 +152,7 @@ exports.createAdmin = async (req, res, next) => {
         return next(error)
     }
 }
+
 exports.deactivateUser = async (req, res, next) => {
     try {
         const errors = validationResult(req)
@@ -96,6 +164,12 @@ exports.deactivateUser = async (req, res, next) => {
         }
 
         const user = await User.findByPk(req.params.id)
+
+        if (!user) {
+            return res.status(404).send({
+                error: "couldn't find user"
+            })
+        }
 
         //top admin may only deactivate or activate an account if its type is admin
         if (user.type === "admin" && req.user.email !== process.env.TOP_ADMIN_EMAIL) {
@@ -139,6 +213,12 @@ exports.activateUser = async (req, res, next) => {
 
         const user = await User.findByPk(req.params.id)
 
+        if (!user) {
+            return res.status(404).send({
+                error: "couldn't find user"
+            })
+        }
+
         //top admin may only deactivate or activate an account if its type is admin
         if (user.type === "admin" && req.user.email !== process.env.TOP_ADMIN_EMAIL) {
             return res.status(401).send({
@@ -162,63 +242,6 @@ exports.activateUser = async (req, res, next) => {
     }
 }
 
-exports.loginAdmin = async (req, res, next) => {
-    try {
-        const errors = validationResult(req)
-
-        if (!errors.isEmpty()) {
-            return res.status(422).send({
-                validationError: errors
-            })
-        }
-
-        const user = await User.findOne({ where: { email: req.body.email } })
-
-        if (!user) {
-            return res.status(404).send({
-                error: "couldn't find a user"
-            })
-        }
-        if (user.active === false) {
-            return res.status(401).send({
-                error:"unauthorized"
-            })
-        }
-
-        const match = await bcrypt.compare(req.body.password, user.password)
-
-        if (match === false) {
-            return res.status(404).send({
-                error: "couldn't find a user"
-            })
-        }
-
-        const token = await jwt.sign({ id: user.id }, process.env.JWT_SECRET)
-
-
-        // mysql query to manipulate json data
-        // append to tokens array in user
-        await User.update(
-            {
-                tokens: sequelize.literal(`JSON_ARRAY_APPEND(tokens, '$', "${token}")`)
-            },
-            {
-                where: { id: user.id }
-            }
-        );
-
-        user.password = ""
-        user.tokens = []
-
-        res.status(200).send({ user, token })
-
-    }catch(e) {
-        console.log(e)
-        const error = new Error(e)
-        error.httpStatusCode = 500
-        return next(error)
-    }
-}
 exports.createWarehouse = async (req, res, next) => {
     try {
         const errors = validationResult(req)
@@ -260,7 +283,7 @@ exports.addProduct = async (req,res,next) => {
             })
         }
         // total stock is counted each time the product gets 
-        //increased and decreased in a warehouse 
+        // increased and decreased in a warehouse 
         const product = await Product.create({
             name: req.body.name,
             description : req.body.description,
@@ -270,6 +293,49 @@ exports.addProduct = async (req,res,next) => {
         res.status(201).send({
             message: "created"
         })
+    } catch (e) {
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
+exports.editProduct = async (req, res, next) => {
+    try {
+        const errors = validationResult(req)
+
+        if (!errors.isEmpty()) {
+            return res.status(422).send({
+                validationError: errors
+            })
+        }
+        const productId = req.params.productId
+
+        const product = await Product.findByPk(productId)
+
+        if (!product) {
+            return res.status(404).send({
+                error: "couldn't find product"
+            })
+        }
+        if (req.file) {
+            // deleting past image
+            deleteFile(path.join(__dirname,product.image))// from file/util
+            product.image = req.file.path
+        }
+        if (req.body.name) {
+            product.name = req.body.name
+        }
+        if (req.body.description) {
+            product.description = req.body.description
+        }
+
+        await product.save()
+
+        res.send({
+            message : "altered"
+        })
+
     } catch (e) {
         console.log(e)
         const error = new Error(e)

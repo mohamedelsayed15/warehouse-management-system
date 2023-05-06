@@ -10,20 +10,25 @@ const { validateLogin,
 } = require('../validation/validators')
 
 //login admin
-router.post('/login-admin',
+router.post(
+    '/login-admin',
     validateLogin,
     adminController.loginAdmin)
+
+//logout admin
+router.get(
+    '/logout-admin',
+    adminAuth,
+    adminController.logoutAdmin)
 
 //creating a supervisor
 router.put(
     '/create-supervisor/:warehouseId',
-    validateIdInParam,
     validateCreateAccount,
     adminAuth,
     adminController.createSupervisorForWarehouse)
 
 //creating another admin
-
 router.put(
     '/create-admin',
     validateCreateAccount,
@@ -31,14 +36,14 @@ router.put(
     adminController.createAdmin)
 
 //deactivate supervisor or admin Top admin may only activate other admins
-router.get(
+router.patch(
     '/deactivate-user/:id',
     validateIdInParam,
     adminAuth,
     adminController.deactivateUser)
 
 //activate supervisor or admin Top admin may only activate other admins
-router.get(
+router.patch(
     '/activate-user/:id',
     validateIdInParam,
     adminAuth,
@@ -56,9 +61,18 @@ router.post('/add-Product',
     upload,//multer
     adminController.addProduct)
 
+//change product
+router.patch(
+    '/edit-product/:productId',
+    adminAuth,
+    upload,// optional
+    adminController.editProduct)
+
 //serving image
 router.get(
     '/image/:productId',
     adminAuth,
     adminController.serveProductImage)
+
+
 module.exports = router

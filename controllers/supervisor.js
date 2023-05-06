@@ -3,7 +3,7 @@ const User = require('../models/user')
 const { validationResult } = require('express-validator')
 const bcrypt = require('bcryptjs')
 const sequelize = require('../util/mysql')
-
+const WareHouse = require('../models/WarehouseProduct')
 exports.loginSupervisor = async (req, res, next) => {
     try {
         const errors = validationResult(req)
@@ -58,3 +58,48 @@ exports.loginSupervisor = async (req, res, next) => {
         return next(error)
     }
 }
+
+exports.requestToAddToWarehouse = async (req, res, next) => {
+    try {
+        //const warehouse = await req.user.getWarehouses()
+
+        //console.log(req.user)
+
+        const warehouse = await WareHouse.findByPk(req.user.warehouseId)
+
+        //console.log(warehouse)
+
+        console.log(await req.user.getWarehouse())
+
+        //const users = await warehouse.getUser()
+
+        res.send()
+
+    } catch (e) {
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
+
+exports.createOrder = async (req, res, next) => {
+    try {
+        console.log(req.user)
+
+        const order = await req.user.createOrder()
+
+        console.log(order.toJSON())
+
+        res.status(201).send({
+            order: order
+        })
+
+    } catch (e) {
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
+
