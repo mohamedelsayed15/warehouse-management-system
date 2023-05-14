@@ -7,6 +7,10 @@ const Order = sequelize.define('order', {
         autoIncrement: true,
         primaryKey: true,
         allowNull: false
+    },
+    accepted: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
     }
 })
 

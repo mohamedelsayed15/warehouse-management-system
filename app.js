@@ -60,17 +60,19 @@ app.use('/*', (req, res, next) => {
     }
 })
 //=============== Relations ==============
-// one to many relation between user(supervisor) and warehouse
-// a warehouse can be assigned to more than one user
-// a user can only be assigned to one warehouse
+
 User.belongsTo(WareHouse, { constraints: true, onDelete: 'CASCADE' })
 WareHouse.hasMany(User)
-// many to many relation between warehouse and product
-// a product can be in many warehouses through WarehouseProduct(quantity)
-// a warehouse has more than a one product
-// we perform N:M relation between both entities in 2 different ways 
-// so we have a full access to all sequelize queries
-//first approach
+Product.belongsTo(User, { constraints: true, onDelete: 'CASCADE' })
+User.hasMany(Product)
+
+Order.belongsTo(User)
+User.hasMany(Order)
+User.hasMany(Order)
+Order.belongsToMany(Product,  { through: OrderItem })// this can be a custom table or a sequelize
+Product.belongsToMany(Order, { through: OrderItem })// made table by inputting text instead of table
+
+
 WareHouse.hasMany(WarehouseProduct)
 WarehouseProduct.belongsTo(WareHouse)
 Product.hasMany(WarehouseProduct)
@@ -78,42 +80,9 @@ WarehouseProduct.belongsTo(Product)
 //second approach
 WareHouse.belongsToMany(Product, { through: WarehouseProduct })
 Product.belongsToMany(WareHouse, { through: WarehouseProduct })
-// we get full access to 
-// User.findAll({ include: Profile }); Many-to-Many
-// Profile.findAll({ include: User }); Many-to-Many
-// User.findAll({ include: Grant }); double One-to-Man
-// Profile.findAll({ include: Grant }); double One-to-Man
-// Grant.findAll({ include: User }); double One-to-Man
-// Grant.findAll({ include: Profile }); double One-to-Man
-// orders to be approved
-// //first approach
-// User.hasMany(Order)
-// Order.belongsTo(User)
-// Product.hasMany(Order)
-// Order.belongsTo(Product)
-// //second approach
-User.belongsToMany(Order, { through: OrderItem })
-Order.belongsToMany(User, { through: OrderItem })
-Order.belongsTo(User,{ constraints: true, onDelete: 'CASCADE' })
-User.hasMany(Order)
-// User.hasMany(OrderItem)
-// OrderItem.belongsTo(User)
-// Order.hasMany(OrderItem)
-// OrderItem.belongsTo(Order,{ constraints: true, onDelete: 'CASCADE' })
-// Product.belongsToMany(Order, { through: OrderItem })
-// Order.belongsToMany(Product, { through: OrderItem })
-// Product.hasMany(OrderItem)
-// OrderItem.belongsTo(Product,{ constraints: true, onDelete: 'CASCADE' })
-// Order.hasMany(OrderItem)
-// OrderItem.belongsTo(Order,{ constraints: true, onDelete: 'CASCADE' })
-Order.belongsTo(User, { constraints: true, onDelete: 'CASCADE' })
-User.hasMany(Order)
+
 //Many to Many M:N we resolve many to many by a third table
-Order.belongsToMany(Product, { through: OrderItem })// this can be a custom table or a sequelize
-Product.belongsToMany(Order, { through: OrderItem })// made table by inputting text instead of table
-OrderItem.belongsTo(Order, { constraints: true, onDelete: 'CASCADE' })
-Order.hasMany(OrderItem)
-OrderItem.belongsTo(Product, { constraints: true, onDelete: 'CASCADE' })
+
 //===============  Sync DB  ============== 
 sequelize.sync()//{force : true}//during development only
     .then(async () => {
@@ -131,6 +100,8 @@ sequelize.sync()//{force : true}//during development only
         //     password: "15d198799",
         //     type: "supervisor"
         // })
+        // const product = await Product.findByPk(1)
+        // const addtoWarehouse = await await warehouse.addProduct(product, { through: { quantity: 1 } })
     }).catch((err) => {
         console.log(err)
     })
