@@ -10,7 +10,8 @@ const WarehouseProduct = sequelize.define('warehouseProduct', {
     },
     quantity: {
         type: DataTypes.INTEGER,
-        allowNull: false
+        allowNull: false,
+        defaultValue: 0
     }
 })
 

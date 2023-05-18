@@ -8,6 +8,7 @@ const Product = require('../models/product')
 const fs = require('fs')
 const path = require('path')
 const { deleteFile }= require('../util/file')
+const WarehouseProduct = require('../models/WarehouseProduct')
 
 exports.loginAdmin = async (req, res, next) => {
     try {
@@ -259,6 +260,25 @@ exports.createWarehouse = async (req, res, next) => {
         res.status(201).send({
             message: "created"
         })
+    }catch (e) {
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
+exports.assignProductToWarehouse = async (req, res, next) => {
+    try {
+        const warehouse = await WareHouse.findByPk(req.body.warehouseId)
+
+        const product = await Product.findByPk(req.body.productId)
+
+        const warehouseProduct = await warehouse.addProduct(product)
+
+        res.send({
+            warehouseProduct
+        })
+
     }catch (e) {
         console.log(e)
         const error = new Error(e)

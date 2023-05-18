@@ -54,6 +54,11 @@ router.post('/create-warehouse',
     adminAuth,
     adminController.createWarehouse)
 
+//add a product to warehouse
+router.post('/assign-product-to-warehouse',
+adminAuth,
+adminController.assignProductToWarehouse)
+
 // admin add product
 router.post('/add-Product',
     //validateProduct,

@@ -63,15 +63,17 @@ app.use('/*', (req, res, next) => {
 
 User.belongsTo(WareHouse, { constraints: true, onDelete: 'CASCADE' })
 WareHouse.hasMany(User)
-Product.belongsTo(User, { constraints: true, onDelete: 'CASCADE' })
-User.hasMany(Product)
+//Product.belongsTo(User, { constraints: true, onDelete: 'CASCADE' })
 
+// 1 : M relation between user and order
+User.hasMany(Order)
 Order.belongsTo(User)
-User.hasMany(Order)
-User.hasMany(Order)
+// N : M relation between order and product
 Order.belongsToMany(Product,  { through: OrderItem })// this can be a custom table or a sequelize
 Product.belongsToMany(Order, { through: OrderItem })// made table by inputting text instead of table
-
+// 1 : M relation between order and warehouse
+Order.belongsTo(WareHouse)
+WareHouse.hasMany(Order)
 
 WareHouse.hasMany(WarehouseProduct)
 WarehouseProduct.belongsTo(WareHouse)
