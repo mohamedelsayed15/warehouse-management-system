@@ -25,6 +25,11 @@ const Product = sequelize.define('product', {
         //allowNull: false,
         defaultValue: 0,
     }
+},{
+    indexes: [{
+        unique: false,
+        fields: ['name']
+    }]
 })
 
 module.exports = Product

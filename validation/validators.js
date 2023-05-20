@@ -28,12 +28,14 @@ exports.validateCreateAccount = [
         })
 ]
     
-exports.validateIdInParam = [
-    // Validate the id parameter
-    param('id')
-        .isInt()
-        .withMessage('Invalid user id'),
-]
+exports.validateIdInParam = (paramName) => {
+    [
+        // Validate the id parameter
+        param(`${paramName}`)
+            .isInt()
+            .withMessage('Invalid user id'),
+    ]
+}
 
 exports.validateLogin = [
     body('email')

@@ -8,8 +8,9 @@ const Product = require('../models/product')
 const fs = require('fs')
 const path = require('path')
 const { deleteFile }= require('../util/file')
-const WarehouseProduct = require('../models/WarehouseProduct')
-
+const { Order } = require('../models/orders')
+const { Op } = require('sequelize')
+// 1
 exports.loginAdmin = async (req, res, next) => {
     try {
         const errors = validationResult(req)
@@ -63,7 +64,7 @@ exports.loginAdmin = async (req, res, next) => {
         return next(error)
     }
 }
-
+// 2
 exports.logoutAdmin = async (req, res, next) => {
     try {
         // Filter the user's tokens array
@@ -84,7 +85,7 @@ exports.logoutAdmin = async (req, res, next) => {
         return next(error)
     }
 }
-
+// 3
 exports.createSupervisorForWarehouse = async (req, res, next) => {
     try {
         const errors = validationResult(req)
@@ -121,7 +122,7 @@ exports.createSupervisorForWarehouse = async (req, res, next) => {
         return next(error)
     }
 }
-
+// 4
 exports.createAdmin = async (req, res, next) => {
     try {
         const errors = validationResult(req)
@@ -153,7 +154,7 @@ exports.createAdmin = async (req, res, next) => {
         return next(error)
     }
 }
-
+// 5
 exports.deactivateUser = async (req, res, next) => {
     try {
         const errors = validationResult(req)
@@ -201,7 +202,7 @@ exports.deactivateUser = async (req, res, next) => {
         return next(error)
     }
 }
-
+// 6
 exports.activateUser = async (req, res, next) => {
     try {
         const errors = validationResult(req)
@@ -242,7 +243,7 @@ exports.activateUser = async (req, res, next) => {
         return next(error)
     }
 }
-
+// 7
 exports.createWarehouse = async (req, res, next) => {
     try {
         const errors = validationResult(req)
@@ -267,6 +268,7 @@ exports.createWarehouse = async (req, res, next) => {
         return next(error)
     }
 }
+// 8
 exports.assignProductToWarehouse = async (req, res, next) => {
     try {
         const warehouse = await WareHouse.findByPk(req.body.warehouseId)
@@ -286,7 +288,7 @@ exports.assignProductToWarehouse = async (req, res, next) => {
         return next(error)
     }
 }
-
+// 9
 exports.addProduct = async (req,res,next) => {
     try {
         const errors = validationResult(req)
@@ -320,6 +322,7 @@ exports.addProduct = async (req,res,next) => {
         return next(error)
     }
 }
+// 10
 exports.editProduct = async (req, res, next) => {
     try {
         const errors = validationResult(req)
@@ -363,6 +366,7 @@ exports.editProduct = async (req, res, next) => {
         return next(error)
     }
 }
+// 11
 exports.serveProductImage = async (req,res,next) => {
     try {
         const errors = validationResult(req)
@@ -393,6 +397,164 @@ exports.serveProductImage = async (req,res,next) => {
         res.setHeader("Content-Type", "image/png")
         
         image.pipe(res)
+
+    } catch (e) {
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
+// 12
+exports.acceptOrder = async (req,res,next) => {
+    try {
+
+        const order = await Order.findByPk(req.params.orderId)
+        order.accepted = false
+
+        if(order.accepted === true) {
+            return res.status(400).send({
+                error: "order is already accepted"
+            })
+        }
+
+        const [warehouse, orderProducts] = await Promise.all([
+                order.getWarehouse(),
+                order.getProducts()
+            ])
+
+        console.log(orderProducts[0].toJSON())
+
+        const ids = orderProducts.map((orderProduct) => {
+            return orderProduct.id
+        })
+
+        console.log(ids)
+
+        const products = await warehouse.getProducts({
+            where: {
+            id :ids
+            }
+        })
+
+        for (let i = 0; i < products.length; i++){
+            products[i].warehouseProduct.quantity += orderProducts[i].orderItem.quantity
+            products[i].stock += orderProducts[i].orderItem.quantity
+            await Promise.all([
+                products[i].warehouseProduct.save(),
+                products[i].save()
+            ])
+        }
+
+        order.accepted = true
+
+        await order.save()
+
+        res.send({ order })
+
+    } catch (e) {
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
+// 13
+exports.viewOrder = async (req,res,next) => {
+    try {
+
+        const order = await Order.findByPk(req.params.orderId)
+
+        const orderProducts = await order.getProducts()
+
+        res.send({ order , orderProducts })
+
+    } catch (e) {
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
+// 14 
+exports.getWarehouseProducts = async (req, res, next) => {
+    try {
+
+        const limit = 5
+
+        let page = +req.query.page || 1 // converting to number default value = 1
+
+        if (!Number.isInteger(page)) { page = 1 }
+
+        const offset = (page - 1) * limit;
+
+        const warehouse = await req.user.getWarehouse()
+
+        const warehouseProducts = await warehouse.getProducts({
+            limit,
+            offset
+        })
+
+        res.send({ warehouseProducts })
+
+    } catch (e) {
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
+// 15
+exports.searchProducts = async (req, res, next) => {
+    try {
+
+        const limit = 6
+
+        let page = +req.query.page || 1 // converting to number default value = 1
+
+        if (!Number.isInteger(page)) { page = 1 }
+
+        const offset = (page - 1) * limit;
+
+        const products = await Product.findAndCountAll({
+            where: {
+                [Op.or]: [
+                    { id: { [Op.like]: `%${req.query.keyword}%` } },
+                    { name: { [Op.like]: `%${req.query.keyword}%` } }
+                ]
+            },
+            offset,
+            limit,
+        })
+        res.send({products})
+
+    } catch (e) {
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
+// 16
+exports.ViewPendingOrders = async (req, res, next) => {
+    try {
+
+        const limit = 4
+
+        let page = +req.query.page || 1 // converting to number default value = 1
+
+        if (!Number.isInteger(page)) { page = 1 }
+
+        const offset = (page - 1) * limit;
+
+        const orders = await Order.findAndCountAll({
+            where: {
+                accepted:false
+            },
+            offset,
+            limit,
+        })
+        res.send({ orders })
 
     } catch (e) {
         console.log(e)

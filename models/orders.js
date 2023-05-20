@@ -12,6 +12,11 @@ const Order = sequelize.define('order', {
         type: DataTypes.BOOLEAN,
         defaultValue: false
     }
+},{
+    indexes: [{
+        unique: false,
+        fields: ['accepted']
+    }]
 })
 
 const OrderItem = sequelize.define('orderItem', {

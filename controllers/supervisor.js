@@ -3,8 +3,12 @@ const User = require('../models/user')
 const { validationResult } = require('express-validator')
 const bcrypt = require('bcryptjs')
 const sequelize = require('../util/mysql')
-const WareHouse = require('../models/WarehouseProduct')
+const WarehouseProduct = require('../models/WarehouseProduct')
+const Warehouse = require('../models/warehouse')
+
 const Product = require('../models/product')
+const { Op } = require('sequelize')
+// 1
 exports.loginSupervisor = async (req, res, next) => {
     try {
         const errors = validationResult(req)
@@ -59,7 +63,28 @@ exports.loginSupervisor = async (req, res, next) => {
         return next(error)
     }
 }
+// 2
+exports.logoutSupervisor = async (req, res, next) => {
+    try {
+        // Filter the user's tokens array
+        await User.update({
+            tokens: sequelize.literal(`JSON_REMOVE(tokens, JSON_UNQUOTE(JSON_SEARCH(tokens, 'one', "${req.token}" )))`)
+        },{
+            where: { id: req.user.id }
+        })
 
+        res.status(200).send({
+            message: "logged out"
+        })
+
+    }catch(e){
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
+// 3
 exports.createOrder = async (req, res, next) => {
     try {
         // initiate order
@@ -76,7 +101,7 @@ exports.createOrder = async (req, res, next) => {
         return next(error)
     }
 }
-
+// 4
 exports.addToOrder = async (req, res, next) => {
     try {
 
@@ -141,6 +166,7 @@ exports.addToOrder = async (req, res, next) => {
         return next(error)
     }
 }
+// 5
 exports.removeFromOrder = async (req, res, next) => {
     try {
 
@@ -183,6 +209,118 @@ exports.removeFromOrder = async (req, res, next) => {
         res.status(200).send({
             orderItem
         })
+
+    } catch (e) {
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
+// 6
+exports.getMyOrders = async (req, res, next) => {
+    try {
+
+        const limit = 5
+
+        let page = +req.query.page || 1 // converting to number default value = 1
+
+        if (!Number.isInteger(page)) { page = 1 }
+
+        const offset = (page - 1) * limit;
+
+        const orders = await req.user.getOrders({
+            limit,
+            offset
+        })
+
+        res.send({ orders })
+
+    } catch (e) {
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
+// 7
+exports.getWarehouseProducts = async (req, res, next) => {
+    try {
+
+        const limit = 5
+
+        let page = +req.query.page || 1 // converting to number default value = 1
+
+        if (!Number.isInteger(page)) { page = 1 }
+
+        const offset = (page - 1) * limit;
+
+        const warehouse = await req.user.getWarehouse()
+
+        const warehouseProducts = await warehouse.getProducts({
+            limit,
+            offset
+        })
+
+        res.send({ warehouseProducts })
+
+    } catch (e) {
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
+// 8
+exports.searchProducts = async (req, res, next) => {
+    try {
+
+        const limit = 6
+
+        let page = +req.query.page || 1 // converting to number default value = 1
+
+        if (!Number.isInteger(page)) { page = 1 }
+
+        const offset = (page - 1) * limit;
+
+        //search in products that are only assigned to the warehouse
+
+        //first approach
+        // const products = await Product.findAndCountAll({
+        //     where: {
+        //         [Op.or]: [
+        //             { id: { [Op.like]: `%${req.query.keyword}%` } },
+        //             { name: { [Op.like]: `%${req.query.keyword}%` } }
+        //         ]
+        //     },
+        //     offset,
+        //     limit,
+        //     include: [
+        //     {
+        //         model: Warehouse,
+        //         where: { id: req.user.warehouseId }
+        //     }
+        //     ],
+        // })
+        // res.send({products})
+
+        //second approach
+        const warehouse = await req.user.getWarehouse()
+        const [count, products] = await Promise.all([
+            warehouse.countProducts(),
+            warehouse.getProducts({
+                where: {
+                    [Op.or]: [
+                        { id: { [Op.like]: `%${req.query.keyword}%` } },
+                        { name: { [Op.like]: `%${req.query.keyword}%` } }
+                    ]
+                },
+                offset,
+                limit,
+            }),
+        ])
+
+        res.send({ count,products })
 
     } catch (e) {
         console.log(e)
