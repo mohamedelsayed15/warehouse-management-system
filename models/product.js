@@ -2,9 +2,8 @@ const { DataTypes } = require('sequelize')
 const sequelize = require('../util/mysql')
 //=============user model==============
 const Product = sequelize.define('product', {
-    id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
+    UPC_ID: {
+        type: DataTypes.STRING,
         primaryKey: true,
         allowNull: false
     },

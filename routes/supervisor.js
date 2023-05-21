@@ -23,12 +23,12 @@ router.post( // 3
     supervisorController.createOrder)
 //add to order first approach
 router.post( // 4
-    '/add-to-order-1/:id',
+    '/add-to-order-1/:UPC_ID',
     supervisorAuth,
     supervisorController.addToOrder)
 //remove item from order
 router.post( // 5
-    '/remove-from-order-1/:id',
+    '/remove-from-order-1/:UPC_ID',
     supervisorAuth,
     supervisorController.removeFromOrder)
 
@@ -46,6 +46,12 @@ router.get( // 8
     '/search-product-in-warehouse',
     supervisorAuth,
     supervisorController.searchProducts)
+
+// generate UPC barcode for a product assigned to warehouse
+router.get(
+    '/generate-upc-barcode/:UPC_ID',
+    supervisorAuth,
+    supervisorController.generateUPC)
 
 //request to make order takes and array of ids [] gets handled from the front end 
 /*

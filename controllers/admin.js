@@ -10,6 +10,8 @@ const path = require('path')
 const { deleteFile }= require('../util/file')
 const { Order } = require('../models/orders')
 const { Op } = require('sequelize')
+const { createCanvas } = require('canvas')
+const Barcode = require('jsbarcode')
 // 1
 exports.loginAdmin = async (req, res, next) => {
     try {
@@ -273,7 +275,7 @@ exports.assignProductToWarehouse = async (req, res, next) => {
     try {
         const warehouse = await WareHouse.findByPk(req.body.warehouseId)
 
-        const product = await Product.findByPk(req.body.productId)
+        const product = await Product.findByPk(req.body.UPC_ID)
 
         const warehouseProduct = await warehouse.addProduct(product)
 
@@ -307,6 +309,7 @@ exports.addProduct = async (req,res,next) => {
         // total stock is counted each time the product gets 
         // increased and decreased in a warehouse 
         const product = await Product.create({
+            UPC_ID:req.body.UPC_ID,
             name: req.body.name,
             description : req.body.description,
             image : req.file.path,
@@ -332,9 +335,9 @@ exports.editProduct = async (req, res, next) => {
                 validationError: errors
             })
         }
-        const productId = req.params.productId
+        const UPC_ID = req.params.UPC_ID
 
-        const product = await Product.findByPk(productId)
+        const product = await Product.findByPk(UPC_ID)
 
         if (!product) {
             return res.status(404).send({
@@ -376,9 +379,9 @@ exports.serveProductImage = async (req,res,next) => {
                 validationError: errors
             })
         }
-        const productId = req.params.productId
+        const UPC_ID = req.params.UPC_ID
         
-        const product = await Product.findByPk(productId)
+        const product = await Product.findByPk(UPC_ID)
 
         if (!product) {
             return res.status(404).send({
@@ -428,8 +431,6 @@ exports.acceptOrder = async (req,res,next) => {
         const ids = orderProducts.map((orderProduct) => {
             return orderProduct.id
         })
-
-        console.log(ids)
 
         const products = await warehouse.getProducts({
             where: {
@@ -555,6 +556,40 @@ exports.ViewPendingOrders = async (req, res, next) => {
             limit,
         })
         res.send({ orders })
+
+    } catch (e) {
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
+
+exports.generateUPC = async (req, res, next) => {
+    try {
+
+        const product = await Product.findByPk(req.params.UPC_ID)
+
+        if (!product) {
+            return res.status(404).send({
+                error : "Couldn't find product"
+            })
+        }
+
+        const canvas = createCanvas();
+
+        Barcode(canvas, req.params.UPC_ID, {
+            format: 'CODE128',
+            displayValue: true,
+            fontSize: 18,
+            textMargin:10
+        })
+
+        res.type('image/png')
+
+        const stream = canvas.createPNGStream()
+
+        stream.pipe(res)
 
     } catch (e) {
         console.log(e)

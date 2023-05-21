@@ -5,9 +5,10 @@ const bcrypt = require('bcryptjs')
 const sequelize = require('../util/mysql')
 const WarehouseProduct = require('../models/WarehouseProduct')
 const Warehouse = require('../models/warehouse')
-
 const Product = require('../models/product')
 const { Op } = require('sequelize')
+const { createCanvas } = require('canvas')
+const Barcode = require('jsbarcode')
 // 1
 exports.loginSupervisor = async (req, res, next) => {
     try {
@@ -126,17 +127,15 @@ exports.addToOrder = async (req, res, next) => {
             })
         }
         // warehouse validation check if product is assigned to warehouse
-        const warehouseProduct = await warehouse.getProducts({ where: { id: req.body.productId } })
+        const warehouseProduct = await warehouse.getProducts({ where: { id: req.body.UPC_ID } })
         if (warehouseProduct.length === 0) {
             return res.status(401).send({
                 error:"product isn't assigned to the warehouse"
             })
         }
 
-        console.log(warehouseProduct[0].toJSON())
-
         // find the product if its in the order list of orderItems
-        let orderItem = await order[0].getProducts({ where: { id: req.body.productId } })
+        let orderItem = await order[0].getProducts({ where: { id: req.body.UPC_ID } })
 
         // if we find the product we replace its quantity with the coming request quantity
         if (orderItem.length > 0) {
@@ -146,7 +145,7 @@ exports.addToOrder = async (req, res, next) => {
 
         } else {
             // else we add the product to to the orderItems list
-            const product = await Product.findByPk(req.body.productId)
+            const product = await Product.findByPk(req.body.UPC_ID)
             if(!product){return res.status(404).send({error:"couldn't find product"})}
             orderItem = await order[0].addProduct(warehouseProduct, {
                 through: {
@@ -191,7 +190,7 @@ exports.removeFromOrder = async (req, res, next) => {
 
 
         // find the product if its in the order list of orderItems
-        let orderItem = await order[0].getProducts({ where: { id: req.body.productId } })
+        let orderItem = await order[0].getProducts({ where: { id: req.body.UPC_ID } })
 
         if (orderItem.length === 0) {
             return res.status(404).send({
@@ -289,7 +288,7 @@ exports.searchProducts = async (req, res, next) => {
         // const products = await Product.findAndCountAll({
         //     where: {
         //         [Op.or]: [
-        //             { id: { [Op.like]: `%${req.query.keyword}%` } },
+        //             { UPC_ID: { [Op.like]: `%${req.query.keyword}%` } },
         //             { name: { [Op.like]: `%${req.query.keyword}%` } }
         //         ]
         //     },
@@ -311,7 +310,7 @@ exports.searchProducts = async (req, res, next) => {
             warehouse.getProducts({
                 where: {
                     [Op.or]: [
-                        { id: { [Op.like]: `%${req.query.keyword}%` } },
+                        { UPC_ID: { [Op.like]: `%${req.query.keyword}%` } },
                         { name: { [Op.like]: `%${req.query.keyword}%` } }
                     ]
                 },
@@ -321,6 +320,45 @@ exports.searchProducts = async (req, res, next) => {
         ])
 
         res.send({ count,products })
+
+    } catch (e) {
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
+
+exports.generateUPC = async (req, res, next) => {
+    try {
+        const warehouse = await req.user.getWarehouse()
+
+        const product = await warehouse.getProducts({
+            where: {
+            UPC_ID:req.params.UPC_ID
+            }
+        })
+
+        if (!product[0]) {
+            return res.status(404).send({
+                error : "Couldn't find product"
+            })
+        }
+
+        const canvas = createCanvas();
+
+        Barcode(canvas, req.params.UPC_ID, {
+            format: 'CODE128',
+            displayValue: true,
+            fontSize: 18,
+            textMargin:10
+        })
+
+        res.type('image/png')
+
+        const stream = canvas.createPNGStream()
+
+        stream.pipe(res)
 
     } catch (e) {
         console.log(e)

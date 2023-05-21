@@ -71,14 +71,14 @@ router.post(// 9
 
 //change product
 router.patch( // 10
-    '/edit-product/:productId',
+    '/edit-product/:UPC_ID',
     adminAuth,
     upload,// optional
     adminController.editProduct)
 
 //serving image
 router.get( // 11
-    '/image/:productId',
+    '/image/:UPC_ID',
     adminAuth,
     adminController.serveProductImage)
 
@@ -112,5 +112,10 @@ router.get( // 16
     adminAuth,
     adminController.ViewPendingOrders)
 
+// generate UPC barcode for a product assigned to warehouse
+router.get(
+    '/generate-upc-barcode/:UPC_ID',
+    adminAuth,
+    adminController.generateUPC)
 
 module.exports = router

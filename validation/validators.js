@@ -36,7 +36,14 @@ exports.validateIdInParam = (paramName) => {
             .withMessage('Invalid user id'),
     ]
 }
-
+exports.validateUPC_ID = () => {
+    [
+        // Validate the id parameter
+        param('UPC_ID')
+            .isLength(12)
+            .withMessage('Invalid user id'),
+    ]
+}
 exports.validateLogin = [
     body('email')
         .isEmail()
@@ -45,6 +52,9 @@ exports.validateLogin = [
 ]
 
 exports.validateProduct = [
+    body('UPC_ID')
+        .isLength(12)
+        .withMessage('enter a valid upc'),
     body('name')
         .isLength({ min: 8 })
         .withMessage("name cant be less than 8 characters"),
