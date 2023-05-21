@@ -114,8 +114,8 @@ router.get( // 16
 
 // generate UPC barcode for a product assigned to warehouse
 router.get(
-    '/generate-upc-barcode/:UPC_ID',
+    '/read-upc-barcode/:UPC_ID',
     adminAuth,
-    adminController.generateUPC)
+    adminController.readUPCImage)
 
 module.exports = router

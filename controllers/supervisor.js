@@ -9,6 +9,8 @@ const Product = require('../models/product')
 const { Op } = require('sequelize')
 const { createCanvas } = require('canvas')
 const Barcode = require('jsbarcode')
+const path = require('path')
+const fs = require('fs')
 // 1
 exports.loginSupervisor = async (req, res, next) => {
     try {
@@ -329,7 +331,7 @@ exports.searchProducts = async (req, res, next) => {
     }
 }
 
-exports.generateUPC = async (req, res, next) => {
+exports.readUPCImage = async (req, res, next) => {
     try {
         const warehouse = await req.user.getWarehouse()
 
@@ -345,20 +347,18 @@ exports.generateUPC = async (req, res, next) => {
             })
         }
 
-        const canvas = createCanvas();
-
-        Barcode(canvas, req.params.UPC_ID, {
-            format: 'CODE128',
-            displayValue: true,
-            fontSize: 18,
-            textMargin:10
+        //image path
+        const upcPath = path.join('images','upc',`${product[0].UPC_ID}.png`)
+        //read stream
+        const image = fs.createReadStream(upcPath)
+        //error handling
+        image.on('error', function (error) {
+            return next(error)
         })
-
+        // set content to png
         res.type('image/png')
-
-        const stream = canvas.createPNGStream()
-
-        stream.pipe(res)
+        // pipe image
+        image.pipe(res)
 
     } catch (e) {
         console.log(e)

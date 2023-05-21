@@ -10,8 +10,8 @@ const path = require('path')
 const { deleteFile }= require('../util/file')
 const { Order } = require('../models/orders')
 const { Op } = require('sequelize')
-const { createCanvas } = require('canvas')
-const Barcode = require('jsbarcode')
+const { generateUPCImage, generateUPCImage2 } = require('../util/generateupcimage')
+
 // 1
 exports.loginAdmin = async (req, res, next) => {
     try {
@@ -315,6 +315,9 @@ exports.addProduct = async (req,res,next) => {
             image : req.file.path,
             //stock: by developer
         })
+        //generating upc image code path util/generateupcimage
+        await generateUPCImage2(req.body.UPC_ID)
+
         res.status(201).send({
             message: "created"
         })
@@ -565,31 +568,28 @@ exports.ViewPendingOrders = async (req, res, next) => {
     }
 }
 
-exports.generateUPC = async (req, res, next) => {
+exports.readUPCImage = async (req, res, next) => {
     try {
-
+        //getting product
         const product = await Product.findByPk(req.params.UPC_ID)
-
+        // validation
         if (!product) {
             return res.status(404).send({
                 error : "Couldn't find product"
             })
         }
-
-        const canvas = createCanvas();
-
-        Barcode(canvas, req.params.UPC_ID, {
-            format: 'CODE128',
-            displayValue: true,
-            fontSize: 18,
-            textMargin:10
+        //image path
+        const upcPath = path.join('images','upc',`${product.UPC_ID}.png`)
+        //read stream
+        const image = fs.createReadStream(upcPath)
+        //error handling
+        image.on('error', function (error) {
+            return next(error)
         })
-
+        // set content to png
         res.type('image/png')
-
-        const stream = canvas.createPNGStream()
-
-        stream.pipe(res)
+        // pipe image
+        image.pipe(res)
 
     } catch (e) {
         console.log(e)

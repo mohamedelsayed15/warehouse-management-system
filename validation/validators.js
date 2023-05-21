@@ -27,7 +27,7 @@ exports.validateCreateAccount = [
             return true
         })
 ]
-    
+
 exports.validateIdInParam = (paramName) => {
     [
         // Validate the id parameter
@@ -44,6 +44,7 @@ exports.validateUPC_ID = () => {
             .withMessage('Invalid user id'),
     ]
 }
+
 exports.validateLogin = [
     body('email')
         .isEmail()

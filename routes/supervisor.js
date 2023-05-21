@@ -49,9 +49,9 @@ router.get( // 8
 
 // generate UPC barcode for a product assigned to warehouse
 router.get(
-    '/generate-upc-barcode/:UPC_ID',
+    '/read-upc-barcode/:UPC_ID',
     supervisorAuth,
-    supervisorController.generateUPC)
+    supervisorController.readUPCImage)
 
 //request to make order takes and array of ids [] gets handled from the front end 
 /*
