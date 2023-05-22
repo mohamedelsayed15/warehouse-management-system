@@ -64,13 +64,13 @@ router.post( // 8
 // admin add product
 router.post(// 9
     '/add-Product',
-    //validateProduct,
     adminAuth,
     upload,//multer
+    validateProduct,
     adminController.addProduct)
 
 //change product
-router.patch( // 10
+router.patch( // 10-
     '/edit-product/:UPC_ID',
     adminAuth,
     upload,// optional
@@ -95,7 +95,7 @@ router.get( // 13
     adminController.viewOrder)
 
 // get warehouse products (pagination)
-router.get( // 14
+router.get( // 14-
     '/warehouse-products',
     adminAuth,
     adminController.getWarehouseProducts)
@@ -113,7 +113,7 @@ router.get( // 16
     adminController.ViewPendingOrders)
 
 // generate UPC barcode for a product assigned to warehouse
-router.get(
+router.get( // 17
     '/read-upc-barcode/:UPC_ID',
     adminAuth,
     adminController.readUPCImage)

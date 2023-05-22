@@ -111,7 +111,7 @@ exports.addToOrder = async (req, res, next) => {
         // find order first order id comes from params
         const order = await req.user.getOrders({
             where: {
-            id: req.params.id
+            id: req.params.orderId
             }
         })
 
@@ -129,7 +129,7 @@ exports.addToOrder = async (req, res, next) => {
             })
         }
         // warehouse validation check if product is assigned to warehouse
-        const warehouseProduct = await warehouse.getProducts({ where: { id: req.body.UPC_ID } })
+        const warehouseProduct = await warehouse.getProducts({ where: { UPC_ID: req.body.UPC_ID } })
         if (warehouseProduct.length === 0) {
             return res.status(401).send({
                 error:"product isn't assigned to the warehouse"
@@ -137,7 +137,7 @@ exports.addToOrder = async (req, res, next) => {
         }
 
         // find the product if its in the order list of orderItems
-        let orderItem = await order[0].getProducts({ where: { id: req.body.UPC_ID } })
+        let orderItem = await order[0].getProducts({ where: { UPC_ID: req.body.UPC_ID } })
 
         // if we find the product we replace its quantity with the coming request quantity
         if (orderItem.length > 0) {
@@ -148,7 +148,13 @@ exports.addToOrder = async (req, res, next) => {
         } else {
             // else we add the product to to the orderItems list
             const product = await Product.findByPk(req.body.UPC_ID)
-            if(!product){return res.status(404).send({error:"couldn't find product"})}
+
+            if (!product) {
+                return res.status(404).send({
+                    error: "couldn't find product"
+                })
+            }
+
             orderItem = await order[0].addProduct(warehouseProduct, {
                 through: {
                 quantity: req.body.quantity
@@ -174,7 +180,7 @@ exports.removeFromOrder = async (req, res, next) => {
         // find order first order id comes from params
         const order = await req.user.getOrders({
             where: {
-            id: req.params.id
+            id: req.params.orderId
             }
         })
 
@@ -192,7 +198,7 @@ exports.removeFromOrder = async (req, res, next) => {
 
 
         // find the product if its in the order list of orderItems
-        let orderItem = await order[0].getProducts({ where: { id: req.body.UPC_ID } })
+        let orderItem = await order[0].getProducts({ where: { UPC_ID: req.body.UPC_ID } })
 
         if (orderItem.length === 0) {
             return res.status(404).send({

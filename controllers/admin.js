@@ -416,7 +416,6 @@ exports.acceptOrder = async (req,res,next) => {
     try {
 
         const order = await Order.findByPk(req.params.orderId)
-        order.accepted = false
 
         if(order.accepted === true) {
             return res.status(400).send({
@@ -429,15 +428,13 @@ exports.acceptOrder = async (req,res,next) => {
                 order.getProducts()
             ])
 
-        console.log(orderProducts[0].toJSON())
-
-        const ids = orderProducts.map((orderProduct) => {
-            return orderProduct.id
+        const UPC_IDs = orderProducts.map((orderProduct) => {
+            return orderProduct.UPC_ID
         })
 
         const products = await warehouse.getProducts({
             where: {
-            id :ids
+                UPC_ID :UPC_IDs
             }
         })
 

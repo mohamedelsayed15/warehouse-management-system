@@ -1,4 +1,6 @@
 const User = require('../models/user')
+const Product = require('../models/product')
+
 const { param,body } = require('express-validator')
 //===============================================
 exports.validateCreateAccount = [
@@ -54,12 +56,29 @@ exports.validateLogin = [
 
 exports.validateProduct = [
     body('UPC_ID')
-        .isLength(12)
-        .withMessage('enter a valid upc'),
+        .custom(async (value, { req }) => { 
+                if (value.length !== 12) {
+                    throw new Error('invalid upc')
+                }
+                if (isNaN(+value) ) {
+                    throw new Error('invalid upc')
+                }
+                if (+value < 100000000000) {
+                    throw new Error('invalid upc')
+                }
+
+                const product = await Product.findByPk(value)
+
+                if (product) {
+                    throw new Error('a product with this upc already exists')
+                }
+                return true
+    }),
     body('name')
         .isLength({ min: 8 })
         .withMessage("name cant be less than 8 characters"),
     body('description')
         .isLength({ min: 12 })
-        .withMessage("description cant be less than 12 characters")
+        .withMessage("description cant be less than 12 characters"),
+        
 ]

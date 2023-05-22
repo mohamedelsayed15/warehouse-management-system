@@ -14,7 +14,7 @@ router.post( // 1
 // logout supervisor
 router.get( // 2
     '/logout-supervisor',
-    validateLogin,
+    supervisorAuth,
     supervisorController.logoutSupervisor)
 //create order first approach
 router.post( // 3
@@ -23,12 +23,12 @@ router.post( // 3
     supervisorController.createOrder)
 //add to order first approach
 router.post( // 4
-    '/add-to-order-1/:UPC_ID',
+    '/add-to-order-1/:orderId',
     supervisorAuth,
     supervisorController.addToOrder)
 //remove item from order
 router.post( // 5
-    '/remove-from-order-1/:UPC_ID',
+    '/remove-from-order-1/:orderId',
     supervisorAuth,
     supervisorController.removeFromOrder)
 
@@ -48,7 +48,7 @@ router.get( // 8
     supervisorController.searchProducts)
 
 // generate UPC barcode for a product assigned to warehouse
-router.get(
+router.get( // 9
     '/read-upc-barcode/:UPC_ID',
     supervisorAuth,
     supervisorController.readUPCImage)
