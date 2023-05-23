@@ -53,6 +53,12 @@ router.get( // 9
     supervisorAuth,
     supervisorController.readUPCImage)
 
+//serving image
+router.get( // 10
+    '/image/:UPC_ID',
+    supervisorAuth,
+    supervisorController.serveProductImage)
+
 //request to make order takes and array of ids [] gets handled from the front end 
 /*
 [

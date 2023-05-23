@@ -336,7 +336,7 @@ exports.searchProducts = async (req, res, next) => {
         return next(error)
     }
 }
-
+// 9
 exports.readUPCImage = async (req, res, next) => {
     try {
         const warehouse = await req.user.getWarehouse()
@@ -364,6 +364,50 @@ exports.readUPCImage = async (req, res, next) => {
         // set content to png
         res.type('image/png')
         // pipe image
+        image.pipe(res)
+
+    } catch (e) {
+        console.log(e)
+        const error = new Error(e)
+        error.httpStatusCode = 500
+        return next(error)
+    }
+}
+// 10
+exports.serveProductImage = async (req,res,next) => {
+    try {
+        const errors = validationResult(req)
+
+        if (!errors.isEmpty()) {
+            return res.status(422).send({
+                validationError: errors
+            })
+        }
+
+        const warehouse = await req.user.getWarehouse()
+
+        const product = await warehouse.getProducts({
+            where: {
+            UPC_ID:req.params.UPC_ID
+            }
+        })
+
+        if (!product[0]) {
+            return res.status(404).send({
+                error : "Couldn't find product"
+            })
+        }
+
+        const imagePath = product[0].image
+
+        const image = fs.createReadStream(imagePath)
+
+        image.on('error', function (error) {
+            return next(error)
+        })
+
+        res.setHeader("Content-Type", "image/jpeg")
+        
         image.pipe(res)
 
     } catch (e) {
