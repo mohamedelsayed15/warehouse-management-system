@@ -7,6 +7,7 @@ const { validateLogin,
     validateIdInParam,
     validateCreateAccount,
     validateProduct,
+    validateUPCinParams,
 } = require('../validation/validators')
 
 //login admin
@@ -72,6 +73,7 @@ router.post(// 9
 //change product
 router.patch( // 10-
     '/edit-product/:UPC_ID',
+    validateUPCinParams,
     adminAuth,
     upload,// optional
     adminController.editProduct)
@@ -79,6 +81,7 @@ router.patch( // 10-
 //serving image
 router.get( // 11
     '/image/:UPC_ID',
+    validateUPCinParams,
     adminAuth,
     adminController.serveProductImage)
 
@@ -115,6 +118,7 @@ router.get( // 16
 // generate UPC barcode for a product assigned to warehouse
 router.get( // 17
     '/read-upc-barcode/:UPC_ID',
+    validateUPCinParams,
     adminAuth,
     adminController.readUPCImage)
 

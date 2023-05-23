@@ -3,7 +3,9 @@ const router = express.Router()
 const supervisorController = require('../controllers/supervisor')
 const { validateLogin,
     validateIdInParam,
+    validateUPCinParams,
 } = require('../validation/validators')
+
 const { supervisorAuth } = require('../middleware/auth')
 /* note each point is numbered to meet its corresponding in the controller */
 //login supervisor
@@ -50,12 +52,14 @@ router.get( // 8
 // generate UPC barcode for a product assigned to warehouse
 router.get( // 9
     '/read-upc-barcode/:UPC_ID',
+    validateUPCinParams,
     supervisorAuth,
     supervisorController.readUPCImage)
 
 //serving image
 router.get( // 10
     '/image/:UPC_ID',
+    validateUPCinParams,
     supervisorAuth,
     supervisorController.serveProductImage)
 

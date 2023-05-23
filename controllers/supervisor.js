@@ -339,6 +339,14 @@ exports.searchProducts = async (req, res, next) => {
 // 9
 exports.readUPCImage = async (req, res, next) => {
     try {
+        const errors = validationResult(req)
+
+        if (!errors.isEmpty()) {
+            return res.status(422).send({
+                validationError: errors
+            })
+        }
+
         const warehouse = await req.user.getWarehouse()
 
         const product = await warehouse.getProducts({
@@ -407,7 +415,7 @@ exports.serveProductImage = async (req,res,next) => {
         })
 
         res.setHeader("Content-Type", "image/jpeg")
-        
+
         image.pipe(res)
 
     } catch (e) {

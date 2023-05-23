@@ -53,6 +53,21 @@ exports.validateLogin = [
         .trim()
         .withMessage('enter a valid email'),
 ]
+exports.validateUPCinParams = [
+    param('UPC_ID')
+        .custom(async (value, { req }) => { 
+                if (value.length !== 12) {
+                    throw new Error('invalid upc')
+                }
+                if (isNaN(+value) ) {
+                    throw new Error('invalid upc')
+                }
+                if (+value < 100000000000) {
+                    throw new Error('invalid upc')
+                }
+
+                return true
+        })]
 
 exports.validateProduct = [
     body('UPC_ID')

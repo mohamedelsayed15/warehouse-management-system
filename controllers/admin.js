@@ -7,10 +7,13 @@ const WareHouse = require('../models/warehouse')
 const Product = require('../models/product')
 const fs = require('fs')
 const path = require('path')
-const { deleteFile,makeDirectory, saveProductImage }= require('../util/file')
+const { deleteFile,
+    makeDirectory,
+    saveProductImage,
+    generateUPCImage2 } = require('../util/file')
 const { Order } = require('../models/orders')
 const { Op } = require('sequelize')
-const { generateUPCImage, generateUPCImage2 } = require('../util/generateupcimage')
+//const { generateUPCImage, generateUPCImage2 } = require('../util/generateupcimage')
 
 // 1
 exports.loginAdmin = async (req, res, next) => {
@@ -575,9 +578,16 @@ exports.ViewPendingOrders = async (req, res, next) => {
         return next(error)
     }
 }
-
+// 17
 exports.readUPCImage = async (req, res, next) => {
     try {
+        const errors = validationResult(req)
+
+        if (!errors.isEmpty()) {
+            return res.status(422).send({
+                validationError: errors
+            })
+        }
         //getting product
         const product = await Product.findByPk(req.params.UPC_ID)
         // validation
