@@ -354,7 +354,7 @@ exports.readUPCImage = async (req, res, next) => {
         }
 
         //image path
-        const upcPath = path.join('images','upc',`${product[0].UPC_ID}.png`)
+        const upcPath = path.join('images',`${product[0].UPC_ID}`,`${product[0].UPC_ID}.png`)
         //read stream
         const image = fs.createReadStream(upcPath)
         //error handling

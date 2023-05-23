@@ -7,7 +7,7 @@ const WareHouse = require('../models/warehouse')
 const Product = require('../models/product')
 const fs = require('fs')
 const path = require('path')
-const { deleteFile }= require('../util/file')
+const { deleteFile,makeDirectory, saveProductImage }= require('../util/file')
 const { Order } = require('../models/orders')
 const { Op } = require('sequelize')
 const { generateUPCImage, generateUPCImage2 } = require('../util/generateupcimage')
@@ -308,15 +308,26 @@ exports.addProduct = async (req,res,next) => {
         }
         // total stock is counted each time the product gets 
         // increased and decreased in a warehouse 
+        const filemimeType = req.file.mimetype.split('/')[1]
+        const UPC_ID = req.body.UPC_ID
+        const filePath = `images/${UPC_ID}/productImage-${UPC_ID}.${filemimeType}`
+
         const product = await Product.create({
-            UPC_ID:req.body.UPC_ID,
+            UPC_ID,
             name: req.body.name,
             description : req.body.description,
-            image : req.file.path,
+            image : filePath,
             //stock: by developer
         })
+        //create directory for product 
+        await makeDirectory(product.UPC_ID)
         //generating upc image code path util/generateupcimage
-        await generateUPCImage2(req.body.UPC_ID)
+        //save image into the file system
+
+        await Promise.all([
+            generateUPCImage2(product.UPC_ID),
+            saveProductImage(filePath,req.file.buffer)
+        ]) 
 
         res.status(201).send({
             message: "created"
@@ -576,7 +587,7 @@ exports.readUPCImage = async (req, res, next) => {
             })
         }
         //image path
-        const upcPath = path.join('images','upc',`${product.UPC_ID}.png`)
+        const upcPath = path.join('images',`${product.UPC_ID}`,`${product.UPC_ID}.png`)
         //read stream
         const image = fs.createReadStream(upcPath)
         //error handling
