@@ -2,6 +2,24 @@ const fs = require('fs')
 const path = require('path')
 const { createCanvas } = require('canvas')
 const Barcode = require('jsbarcode')
+
+const deleteFile = async (filePath) => {
+    try {
+        await fs.promises.unlink(filePath)
+    } catch (e) {
+        console.log(e)
+    }
+}
+
+const makeDirectory = async (UPC_ID) => {
+    try {
+        const directoryPath = 'images/' + `${UPC_ID}`
+        await fs.promises.mkdir(directoryPath)
+    } catch (e) {
+        console.log(e)
+    }
+}
+
 // first method converting canvas to buffer then use write() method
 //second method create PNG stream then pipe it into write stream
 const generateUPCImage2 = (UPC_ID) => {
@@ -44,23 +62,7 @@ const generateUPCImage2 = (UPC_ID) => {
     }
 }
 
-const deleteFile = async (filePath) => {
-    try {
-        await fs.promises.unlink(filePath)
-    } catch (e) {
-        console.log(e)
-    }
-}
-
-const makeDirectory = async (UPC_ID) => {
-    try {
-        await fs.promises.mkdir('images/'+`${UPC_ID}`)
-    } catch (e) {
-        console.log(e)
-    }
-}
-
-const saveProductImage = (filePath,data) => {
+const saveProductImage = (data,filePath) => {
     return new Promise((resolve, reject) => {
         const writer = fs.createWriteStream(filePath);
     

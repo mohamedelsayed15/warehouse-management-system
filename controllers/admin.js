@@ -313,6 +313,7 @@ exports.addProduct = async (req,res,next) => {
         // increased and decreased in a warehouse 
         const filemimeType = req.file.mimetype.split('/')[1]
         const UPC_ID = req.body.UPC_ID
+
         const filePath = `images/${UPC_ID}/productImage-${UPC_ID}.${filemimeType}`
 
         const product = await Product.create({
@@ -329,13 +330,24 @@ exports.addProduct = async (req,res,next) => {
 
         await Promise.all([
             generateUPCImage2(product.UPC_ID),
-            saveProductImage(filePath,req.file.buffer)
-        ]) 
+            saveProductImage(req.file.buffer,filePath)//
+        ])
 
         res.status(201).send({
             message: "created"
         })
     } catch (e) {
+        try {
+            const product = await Product.findByPk(req.body.UPC_ID)
+            if (product) {
+                await product.destroy()
+            }
+            deleteFile(`images/${product.UPC_ID}/${product.UPC_ID}.png`)
+            deleteFile(product.image)
+
+        } catch {
+            
+        }
         console.log(e)
         const error = new Error(e)
         error.httpStatusCode = 500
