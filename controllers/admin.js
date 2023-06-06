@@ -419,7 +419,8 @@ exports.serveProductImage = async (req,res,next) => {
 
         const imagePath = product.image
 
-        const image = fs.createReadStream(imagePath)
+        const image = fs.createReadStream(imagePath,
+            { highWaterMark: 10000000 })//setting buffer size
 
         image.on('error', function (error) {
             return next(error)
@@ -427,7 +428,9 @@ exports.serveProductImage = async (req,res,next) => {
 
         res.setHeader("Content-Type", "image/png")
         
-        image.pipe(res)
+        image.on('open', () => {
+            image.pipe(res)
+        })
 
     } catch (e) {
         console.log(e)
@@ -610,15 +613,19 @@ exports.readUPCImage = async (req, res, next) => {
         //image path
         const upcPath = path.join('images',`${product.UPC_ID}`,`${product.UPC_ID}.png`)
         //read stream
-        const image = fs.createReadStream(upcPath)
+        const image = fs.createReadStream(upcPath,
+            { highWaterMark: 10000000 })//setting buffer size
+        
+        // set content to png
+        res.type('image/png')
+        // pipe image
+        image.on('open', () => {
+            image.pipe(res)
+        })
         //error handling
         image.on('error', function (error) {
             return next(error)
         })
-        // set content to png
-        res.type('image/png')
-        // pipe image
-        image.pipe(res)
 
     } catch (e) {
         console.log(e)

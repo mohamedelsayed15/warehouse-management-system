@@ -3,12 +3,8 @@ const User = require('../models/user')
 const { validationResult } = require('express-validator')
 const bcrypt = require('bcryptjs')
 const sequelize = require('../util/mysql')
-const WarehouseProduct = require('../models/WarehouseProduct')
-const Warehouse = require('../models/warehouse')
 const Product = require('../models/product')
 const { Op } = require('sequelize')
-const { createCanvas } = require('canvas')
-const Barcode = require('jsbarcode')
 const path = require('path')
 const fs = require('fs')
 // 1
@@ -364,15 +360,19 @@ exports.readUPCImage = async (req, res, next) => {
         //image path
         const upcPath = path.join('images',`${product[0].UPC_ID}`,`${product[0].UPC_ID}.png`)
         //read stream
-        const image = fs.createReadStream(upcPath)
+        const image = fs.createReadStream(upcPath,
+            { highWaterMark: 10000000 })//setting buffer size
+        
+        // set content to png
+        res.type('image/png')
+        // pipe image
+        image.on('open', () => {
+            image.pipe(res)
+        })
         //error handling
         image.on('error', function (error) {
             return next(error)
         })
-        // set content to png
-        res.type('image/png')
-        // pipe image
-        image.pipe(res)
 
     } catch (e) {
         console.log(e)
@@ -408,16 +408,17 @@ exports.serveProductImage = async (req,res,next) => {
 
         const imagePath = product[0].image
 
-        const image = fs.createReadStream(imagePath)
-
-        image.on('error', function (error) {
-            return next(error)
-        })
+        const image = fs.createReadStream(imagePath,
+            { highWaterMark: 10000000 })//setting buffer size
 
         res.setHeader("Content-Type", "image/jpeg")
 
-        image.pipe(res)
-
+        image.on('open', () => {
+            image.pipe(res)
+        })
+        image.on('error', function (error) {
+            return next(error)
+        })
     } catch (e) {
         console.log(e)
         const error = new Error(e)
