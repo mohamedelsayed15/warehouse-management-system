@@ -2,13 +2,16 @@ const express = require('express')
 const router = express.Router()
 const adminController = require('../controllers/admin')
 const { adminAuth } = require('../middleware/auth')
-const upload = require('../multer/multer')
+const upload = require('../util/multer')
 const { validateLogin,
     validateIdInParam,
     validateCreateAccount,
     validateProduct,
     validateUPCinParams,
 } = require('../validation/validators')
+
+const apicache = require('apicache')
+let cache = apicache.middleware
 
 //login admin
 router.post( // 1
@@ -83,6 +86,7 @@ router.get( // 11
     '/image/:UPC_ID',
     validateUPCinParams,
     adminAuth,
+    cache('60 minutes'),
     adminController.serveProductImage)
 
 // change order status to accepted (accepted)
@@ -120,6 +124,7 @@ router.get( // 17
     '/read-upc-barcode/:UPC_ID',
     validateUPCinParams,
     adminAuth,
+    cache('60 minutes'),
     adminController.readUPCImage)
 
 module.exports = router

@@ -12,9 +12,12 @@
   "author": "mohamed el-sayed",
   "license": "ISC",
   "dependencies": {
+    "apicache": "^1.6.3",
     "bcryptjs": "^2.4.3",
     "canvas": "^2.11.2",
+    "cors": "^2.8.5",
     "express": "^4.18.2",
+    "express-rate-limit": "^6.7.0",
     "express-validator": "^7.0.1",
     "jsbarcode": "^3.11.5",
     "jsonwebtoken": "^9.0.0",

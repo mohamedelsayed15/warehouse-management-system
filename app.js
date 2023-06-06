@@ -1,6 +1,9 @@
 const express = require('express')
-//================ DB connection ==============
+const cors = require('cors')
+const apicache = require('apicache')
+//================ utils connection ==============
 const sequelize = require('./util/mysql')
+const rateLimit = require('./util/ratelimit')
 //=============== Calling Routes ==============
 const adminRoutes = require('./routes/admin')
 const supervisorRoutes = require('./routes/supervisor')
@@ -14,6 +17,9 @@ const { Order, OrderItem } = require('./models/orders')
 const app = express()
 //========== Parsers ============
 app.use(express.json({ limit: "3kb" })); //parser//json data size limitation
+app.use(cors())
+app.use(rateLimit)//from util/ratelimit.js
+app.set('trust proxy',1)
 //==========  Routes ============
 
 app.use('/admin',adminRoutes)

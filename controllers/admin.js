@@ -344,14 +344,13 @@ exports.addProduct = async (req,res,next) => {
             }
             deleteFile(`images/${product.UPC_ID}/${product.UPC_ID}.png`)
             deleteFile(product.image)
-
+            console.log(e)
+            const error = new Error(e)
+            error.httpStatusCode = 500
+            return next(error)
         } catch {
             
         }
-        console.log(e)
-        const error = new Error(e)
-        error.httpStatusCode = 500
-        return next(error)
     }
 }
 // 10

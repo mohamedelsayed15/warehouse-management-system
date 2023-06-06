@@ -5,8 +5,11 @@ const { validateLogin,
     validateIdInParam,
     validateUPCinParams,
 } = require('../validation/validators')
-
 const { supervisorAuth } = require('../middleware/auth')
+
+const apicache = require('apicache')
+let cache = apicache.middleware
+
 /* note each point is numbered to meet its corresponding in the controller */
 //login supervisor
 router.post( // 1
@@ -49,11 +52,12 @@ router.get( // 8
     supervisorAuth,
     supervisorController.searchProducts)
 
-// generate UPC barcode for a product assigned to warehouse
+// get UPC barcode for a product assigned to warehouse
 router.get( // 9
     '/read-upc-barcode/:UPC_ID',
     validateUPCinParams,
     supervisorAuth,
+    cache('60 minutes'),
     supervisorController.readUPCImage)
 
 //serving image
@@ -61,6 +65,7 @@ router.get( // 10
     '/image/:UPC_ID',
     validateUPCinParams,
     supervisorAuth,
+    cache('60 minutes'),
     supervisorController.serveProductImage)
 
 //request to make order takes and array of ids [] gets handled from the front end 
