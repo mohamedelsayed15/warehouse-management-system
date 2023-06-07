@@ -81,12 +81,12 @@ router.patch( // 10-
     upload,// optional
     adminController.editProduct)
 
-//serving image
+//serving product image
 router.get( // 11
     '/image/:UPC_ID',
     validateUPCinParams,
     adminAuth,
-    cache('60 minutes'),
+    //cache('60 minutes'),
     adminController.serveProductImage)
 
 // change order status to accepted (accepted)

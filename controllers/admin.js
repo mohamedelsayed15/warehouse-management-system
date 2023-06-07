@@ -408,7 +408,7 @@ exports.serveProductImage = async (req,res,next) => {
             })
         }
         const UPC_ID = req.params.UPC_ID
-        
+
         const product = await Product.findByPk(UPC_ID)
 
         if (!product) {
@@ -420,18 +420,28 @@ exports.serveProductImage = async (req,res,next) => {
         const imagePath = product.image
 
         const image = fs.createReadStream(imagePath,
-            { highWaterMark: 120000 })//setting buffer size// 15kilobytes
-
-        image.on('error', function (error) {
-            return next(error)
-        })
+            { highWaterMark: 6000 })//setting buffer size// 15kilobytes
 
         res.setHeader("Content-Type", "image/png")
-        
+
         image.on('open', () => {
             image.pipe(res)
         })
 
+        let totalChunk = 0
+        image.on('data', (chunk) => {
+            let chunkLength = chunk.byteLength
+            console.log('Chunk length :', chunkLength)
+            totalChunk+= chunkLength
+            console.log('Total chunk length :', totalChunk)
+
+        })
+        image.on('end', () => {
+            res.end()
+        })
+        image.on('error', function (error) {
+            return next(error)
+        })
     } catch (e) {
         console.log(e)
         const error = new Error(e)
@@ -621,6 +631,17 @@ exports.readUPCImage = async (req, res, next) => {
         // pipe image
         image.on('open', () => {
             image.pipe(res)
+        })
+        let totalChunk = 0
+        image.on('data', (chunk) => {
+            let chunkLength = chunk.byteLength
+            console.log('Chunk length :', chunkLength)
+            totalChunk+= chunkLength
+            console.log('Total chunk length :', totalChunk)
+
+        })
+        image.on('end', () => {
+            res.end()
         })
         //error handling
         image.on('error', function (error) {

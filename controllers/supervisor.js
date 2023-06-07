@@ -369,6 +369,17 @@ exports.readUPCImage = async (req, res, next) => {
         image.on('open', () => {
             image.pipe(res)
         })
+        let totalChunk = 0
+        image.on('data', (chunk) => {
+            let chunkLength = chunk.byteLength
+            console.log('Chunk length :', chunkLength)
+            totalChunk+= chunkLength
+            console.log('Total chunk length :', totalChunk)
+
+        })
+        image.on('end', () => {
+            res.end()
+        })
         //error handling
         image.on('error', function (error) {
             return next(error)
@@ -415,6 +426,17 @@ exports.serveProductImage = async (req,res,next) => {
 
         image.on('open', () => {
             image.pipe(res)
+        })
+        let totalChunk = 0
+        image.on('data', (chunk) => {
+            let chunkLength = chunk.byteLength
+            console.log('Chunk length :', chunkLength)
+            totalChunk+= chunkLength
+            console.log('Total chunk length :', totalChunk)
+
+        })
+        image.on('end', () => {
+            res.end()
         })
         image.on('error', function (error) {
             return next(error)
