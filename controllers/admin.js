@@ -420,7 +420,7 @@ exports.serveProductImage = async (req,res,next) => {
         const imagePath = product.image
 
         const image = fs.createReadStream(imagePath,
-            { highWaterMark: 10000000 })//setting buffer size
+            { highWaterMark: 120000 })//setting buffer size// 15kilobytes
 
         image.on('error', function (error) {
             return next(error)
@@ -614,7 +614,7 @@ exports.readUPCImage = async (req, res, next) => {
         const upcPath = path.join('images',`${product.UPC_ID}`,`${product.UPC_ID}.png`)
         //read stream
         const image = fs.createReadStream(upcPath,
-            { highWaterMark: 10000000 })//setting buffer size
+            { highWaterMark: 120000 })//setting buffer size
         
         // set content to png
         res.type('image/png')
