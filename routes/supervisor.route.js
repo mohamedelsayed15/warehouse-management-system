@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const supervisorController = require('../controllers/supervisor')
+const supervisorController = require('../controllers/supervisor.controller')
 const { validateLogin,
     validateIdInParam,
     validateUPCinParams,
@@ -8,7 +8,7 @@ const { validateLogin,
 const { supervisorAuth } = require('../middleware/auth')
 
 const apicache = require('apicache')
-let cache = apicache.middleware
+// let cache = apicache.middleware
 
 /* note each point is numbered to meet its corresponding in the controller */
 //login supervisor
@@ -57,7 +57,7 @@ router.get( // 9
     '/read-upc-barcode/:UPC_ID',
     validateUPCinParams,
     supervisorAuth,
-    cache('60 minutes'),
+    // cache('60 minutes'),
     supervisorController.readUPCImage)
 
 //serving image
@@ -65,7 +65,7 @@ router.get( // 10
     '/image/:UPC_ID',
     validateUPCinParams,
     supervisorAuth,
-    cache('60 minutes'),
+    // cache('60 minutes'),
     supervisorController.serveProductImage)
 
 //request to make order takes and array of ids [] gets handled from the front end 

@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router()
-const adminController = require('../controllers/admin')
+const adminController = require('../controllers/admin.controller')
 const { adminAuth } = require('../middleware/auth')
 const upload = require('../util/multer')
 const { validateLogin,
@@ -69,7 +69,7 @@ router.post( // 8
 router.post(// 9
     '/add-Product',
     adminAuth,
-    upload,//multer
+    upload,//multer/ util/multer.js
     validateProduct,
     adminController.addProduct)
 
@@ -78,7 +78,7 @@ router.patch( // 10-
     '/edit-product/:UPC_ID',
     validateUPCinParams,
     adminAuth,
-    upload,// optional
+    upload,// optional to add image in change product
     adminController.editProduct)
 
 //serving product image
@@ -124,7 +124,7 @@ router.get( // 17
     '/read-upc-barcode/:UPC_ID',
     validateUPCinParams,
     adminAuth,
-    cache('60 minutes'),
+    //cache('60 minutes'),
     adminController.readUPCImage)
 
 module.exports = router

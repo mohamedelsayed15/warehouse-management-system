@@ -1,17 +1,17 @@
 const jwt = require('jsonwebtoken')
-const User = require('../models/user')
+const User = require('../models/users.model')
 const { validationResult } = require('express-validator')
 const bcrypt = require('bcryptjs')
 const sequelize = require('../util/mysql')
-const WareHouse = require('../models/warehouse')
-const Product = require('../models/product')
+const WareHouse = require('../models/warehouses.model')
+const Product = require('../models/products.model')
 const fs = require('fs')
 const path = require('path')
 const { deleteFile,
     makeDirectory,
     saveProductImage,
     generateUPCImage2 } = require('../util/file')
-const { Order } = require('../models/orders')
+const { Order } = require('../models/orders.model')
 const { Op } = require('sequelize')
 //const { generateUPCImage, generateUPCImage2 } = require('../util/generateupcimage')
 
@@ -372,6 +372,7 @@ exports.editProduct = async (req, res, next) => {
                 error: "couldn't find product"
             })
         }
+
         if (req.file) {
             // deleting past image
             deleteFile(path.join(__dirname,product.image))// from file/util
@@ -420,7 +421,7 @@ exports.serveProductImage = async (req,res,next) => {
         const imagePath = product.image
 
         const image = fs.createReadStream(imagePath,
-            { highWaterMark: 6000 })//setting buffer size// 15kilobytes
+            { highWaterMark: 6000 })//setting buffer size/
 
         res.setHeader("Content-Type", "image/png")
 

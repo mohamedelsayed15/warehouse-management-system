@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken')
-const User = require('../models/user')
-const WareHouse = require('../models/warehouse')
+const User = require('../models/users.model')
 
 exports.adminAuth = async (req, res, next) => {
     try {

@@ -1,5 +1,5 @@
-const User = require('../models/user')
-const Product = require('../models/product')
+const User = require('../models/users.model')
+const Product = require('../models/products.model')
 
 const { param,body } = require('express-validator')
 //===============================================

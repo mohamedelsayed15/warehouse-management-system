@@ -64,10 +64,18 @@ const generateUPCImage2 = (UPC_ID) => {
 
 const saveProductImage = (data,filePath) => {
     return new Promise((resolve, reject) => {
-        const writer = fs.createWriteStream(filePath);
+        const writer = fs.createWriteStream(filePath,
+            { highWaterMark: 6000 })//setting buffer size
     
         writer.write(data);
-    
+        let totalChunk = 0
+        writer.on('data', (chunk) => {
+            let chunkLength = chunk.byteLength
+            console.log('Chunk length :', chunkLength)
+            totalChunk+= chunkLength
+            console.log('Total chunk length :', totalChunk)
+
+        })
         writer.on('finish', () => {
             resolve('product image created');
         });

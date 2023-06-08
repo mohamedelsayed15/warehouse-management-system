@@ -1,9 +1,9 @@
 const jwt = require('jsonwebtoken')
-const User = require('../models/user')
+const User = require('../models/users.model')
 const { validationResult } = require('express-validator')
 const bcrypt = require('bcryptjs')
 const sequelize = require('../util/mysql')
-const Product = require('../models/product')
+const Product = require('../models/products.model')
 const { Op } = require('sequelize')
 const path = require('path')
 const fs = require('fs')
@@ -185,13 +185,13 @@ exports.removeFromOrder = async (req, res, next) => {
                 error:"Couldn't find Order"
             })
         }
+
         // once order accepted by an admin supervisor cant add to it 
         if (order[0].accepted !== false) {
             return res.status(401).send({
                 error:"unauthorized"
             })
         }
-
 
         // find the product if its in the order list of orderItems
         let orderItem = await order[0].getProducts({ where: { UPC_ID: req.body.UPC_ID } })

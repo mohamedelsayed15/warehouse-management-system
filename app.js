@@ -5,14 +5,14 @@ const apicache = require('apicache')
 const sequelize = require('./util/mysql')
 const rateLimit = require('./util/ratelimit')
 //=============== Calling Routes ==============
-const adminRoutes = require('./routes/admin')
-const supervisorRoutes = require('./routes/supervisor')
+const adminRoutes = require('./routes/admin.route')
+const supervisorRoutes = require('./routes/supervisor.route')
 //============== Calling Models ===============
-const User = require('./models/user')
-const WareHouse = require('./models/warehouse')
-const Product = require('./models/product')
-const WarehouseProduct = require('./models/WarehouseProduct')
-const { Order, OrderItem } = require('./models/orders')
+const User = require('./models/users.model')
+const WareHouse = require('./models/warehouses.model')
+const Product = require('./models/products.model')
+const WarehouseProduct = require('./models/WarehouseProducts.model')
+const { Order, OrderItem } = require('./models/orders.model')
 //========== Express ============
 const app = express()
 //========== Parsers ============
