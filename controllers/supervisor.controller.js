@@ -18,7 +18,10 @@ exports.loginSupervisor = async (req, res, next) => {
             })
         }
 
-        const user = await User.findOne({ where: { email: req.body.email } })
+        const user = await User.findOne({
+            where: { email: req.body.email },
+            attributes: { exclude: ['type','tokens', 'createdAt', 'updatedAt'] },
+        })
 
         if (!user) {
             return res.status(404).send({
@@ -51,7 +54,6 @@ exports.loginSupervisor = async (req, res, next) => {
         );
 
         user.password = ""
-        user.tokens = []
 
         res.status(200).send({ user, token })
 
@@ -108,7 +110,8 @@ exports.addToOrder = async (req, res, next) => {
         const order = await req.user.getOrders({
             where: {
             id: req.params.orderId
-            }
+            },
+            limit:1
         })
 
         const warehouse = await req.user.getWarehouse()
@@ -125,7 +128,10 @@ exports.addToOrder = async (req, res, next) => {
             })
         }
         // warehouse validation check if product is assigned to warehouse
-        const warehouseProduct = await warehouse.getProducts({ where: { UPC_ID: req.body.UPC_ID } })
+        const warehouseProduct = await warehouse.getProducts({
+            where: { UPC_ID: req.body.UPC_ID },
+            limit:1
+        })
         if (warehouseProduct.length === 0) {
             return res.status(401).send({
                 error:"product isn't assigned to the warehouse"
@@ -133,7 +139,10 @@ exports.addToOrder = async (req, res, next) => {
         }
 
         // find the product if its in the order list of orderItems
-        let orderItem = await order[0].getProducts({ where: { UPC_ID: req.body.UPC_ID } })
+        let orderItem = await order[0].getProducts({
+            where: { UPC_ID: req.body.UPC_ID },
+            limit:1
+        })
 
         // if we find the product we replace its quantity with the coming request quantity
         if (orderItem.length > 0) {
@@ -177,7 +186,8 @@ exports.removeFromOrder = async (req, res, next) => {
         const order = await req.user.getOrders({
             where: {
             id: req.params.orderId
-            }
+            },
+            limit:1
         })
 
         if (order.length === 0) {
@@ -194,7 +204,10 @@ exports.removeFromOrder = async (req, res, next) => {
         }
 
         // find the product if its in the order list of orderItems
-        let orderItem = await order[0].getProducts({ where: { UPC_ID: req.body.UPC_ID } })
+        let orderItem = await order[0].getProducts({
+            where: { UPC_ID: req.body.UPC_ID },
+            limit:1
+        })
 
         if (orderItem.length === 0) {
             return res.status(404).send({
@@ -348,7 +361,9 @@ exports.readUPCImage = async (req, res, next) => {
         const product = await warehouse.getProducts({
             where: {
             UPC_ID:req.params.UPC_ID
-            }
+            },
+            attributes:['UPC_ID'],
+            limit:1
         })
 
         if (!product[0]) {
@@ -408,7 +423,9 @@ exports.serveProductImage = async (req,res,next) => {
         const product = await warehouse.getProducts({
             where: {
             UPC_ID:req.params.UPC_ID
-            }
+            },
+            attributes:['UPC_ID','image'],
+            limit:1
         })
 
         if (!product[0]) {

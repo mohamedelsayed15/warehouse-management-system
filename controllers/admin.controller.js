@@ -26,7 +26,10 @@ exports.loginAdmin = async (req, res, next) => {
             })
         }
 
-        const user = await User.findOne({ where: { email: req.body.email } })
+        const user = await User.findOne({
+            where: { email: req.body.email },
+            attributes: { exclude: ['type','tokens', 'createdAt', 'updatedAt'] },
+        })
 
         if (!user) {
             return res.status(404).send({
@@ -410,7 +413,9 @@ exports.serveProductImage = async (req,res,next) => {
         }
         const UPC_ID = req.params.UPC_ID
 
-        const product = await Product.findByPk(UPC_ID)
+        const product = await Product.findByPk(UPC_ID, {
+            attributes: ['image', 'UPC_ID']
+        })
 
         if (!product) {
             return res.status(404).send({
@@ -474,7 +479,8 @@ exports.acceptOrder = async (req,res,next) => {
         const products = await warehouse.getProducts({
             where: {
                 UPC_ID :UPC_IDs
-            }
+            },
+            limit:UPC_IDs.length
         })
 
         for (let i = 0; i < products.length; i++){
@@ -614,7 +620,10 @@ exports.readUPCImage = async (req, res, next) => {
             })
         }
         //getting product
-        const product = await Product.findByPk(req.params.UPC_ID)
+        const product = await Product.findByPk(req.params.UPC_ID, {
+            attributes: ['UPC_ID']
+        })
+
         // validation
         if (!product) {
             return res.status(404).send({
