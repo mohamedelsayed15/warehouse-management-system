@@ -2,14 +2,15 @@ const express = require('express')
 const router = express.Router()
 const adminController = require('../controllers/admin.controller')
 const { adminAuth } = require('../middleware/auth')
-const upload = require('../util/multer')
+const {upload,upload2} = require('../util/multer')
 const { validateLogin,
     validateIdInParam,
     validateCreateAccount,
     validateProduct,
     validateUPCinParams,
 } = require('../validation/validators')
-
+const multer = require('multer')
+const multerParser = multer()
 const apicache = require('apicache')
 let cache = apicache.middleware
 
@@ -69,7 +70,7 @@ router.post( // 8
 router.post(// 9
     '/add-Product',
     adminAuth,
-    upload,//multer/ util/multer.js
+    upload2(),//multer/ util/multer.js
     validateProduct,
     adminController.addProduct)
 
@@ -78,7 +79,8 @@ router.patch( // 10-
     '/edit-product/:UPC_ID',
     validateUPCinParams,
     adminAuth,
-    upload,// optional to add image in change product
+    upload2(),
+    //upload(),// optional to add image in change product
     adminController.editProduct)
 
 //serving product image

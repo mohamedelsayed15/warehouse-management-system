@@ -10,7 +10,7 @@ const jwtVerify = (headerToken) => {
     // still faster than .replace() because we letting search to know
     // that it is in the first
     // trimming first 7 characters since we know it starts with 'Bearer '
-    headerToken = headerToken.substring(7)
+    
     return new Promise((resolve, reject) => {
         jwt.verify(
             headerToken,
@@ -34,10 +34,9 @@ exports.adminAuth = async (req, res, next) => {
                 error:"the request is missing bearer token"
             })
         }
-
+        headerToken = headerToken.substring(7)
         //custom function (promise) also trims 'Bearer '
         const decoded = await jwtVerify(headerToken)
-
         if (!decoded) {
             return res.status(401).send({
                 error:"unauthorized"
@@ -94,6 +93,7 @@ exports.supervisorAuth = async (req, res, next) => {
                 error:"the request is missing bearer token"
             })
         } 
+        headerToken = headerToken.substring(7)
         //custom function (promise) also trims 'Bearer '
         const decoded = await jwtVerify(headerToken)
 

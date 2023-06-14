@@ -15,6 +15,7 @@ const makeDirectory = async (UPC_ID) => {
     try {
         const directoryPath = 'images/' + `${UPC_ID}`
         await fs.promises.mkdir(directoryPath)
+        return directoryPath
     } catch (e) {
         console.log(e)
     }
@@ -62,20 +63,14 @@ const generateUPCImage2 = (UPC_ID) => {
     }
 }
 
-const saveProductImage = (data,filePath) => {
+const saveProductImage = (file,filePath) => {
     return new Promise((resolve, reject) => {
         const writer = fs.createWriteStream(filePath,
             { highWaterMark: 6000 })//setting buffer size
-    
-        writer.write(data);
-        let totalChunk = 0
-        writer.on('data', (chunk) => {
-            let chunkLength = chunk.byteLength
-            console.log('Chunk length :', chunkLength)
-            totalChunk+= chunkLength
-            console.log('Total chunk length :', totalChunk)
 
-        })
+        writer.write(file);
+        let totalChunk = 0
+
         writer.on('finish', () => {
             resolve('product image created');
         });

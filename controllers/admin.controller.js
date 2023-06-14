@@ -13,6 +13,7 @@ const { deleteFile,
     generateUPCImage2 } = require('../util/file')
 const { Order } = require('../models/orders.model')
 const { Op } = require('sequelize')
+const  {upload}  = require('../util/multer')
 //const { generateUPCImage, generateUPCImage2 } = require('../util/generateupcimage')
 
 // 1
@@ -299,6 +300,8 @@ exports.assignProductToWarehouse = async (req, res, next) => {
 // 9
 exports.addProduct = async (req,res,next) => {
     try {
+        console.log("sssss")
+
         const errors = validationResult(req)
 
         if (!errors.isEmpty()) {
@@ -312,12 +315,12 @@ exports.addProduct = async (req,res,next) => {
                 error : "couldn't receive your image"
             })
         }
-        // total stock is counted each time the product gets 
-        // increased and decreased in a warehouse 
         const filemimeType = req.file.mimetype.split('/')[1]
         const UPC_ID = req.body.UPC_ID
+        const filePath = `images/${UPC_ID}/productImageFs-${UPC_ID}.${filemimeType}`
 
-        const filePath = `images/${UPC_ID}/productImage-${UPC_ID}.${filemimeType}`
+        // total stock is counted each time the product gets 
+        // increased and decreased in a warehouse 
 
         const product = await Product.create({
             UPC_ID,
@@ -326,6 +329,7 @@ exports.addProduct = async (req,res,next) => {
             image : filePath,
             //stock: by developer
         })
+
         //create directory for product 
         await makeDirectory(product.UPC_ID)
         //generating upc image code path util/generateupcimage
@@ -375,11 +379,16 @@ exports.editProduct = async (req, res, next) => {
                 error: "couldn't find product"
             })
         }
+        console.log()
 
         if (req.file) {
             // deleting past image
-            deleteFile(path.join(__dirname,product.image))// from file/util
-            product.image = req.file.path
+            await deleteFile(product.image)// from file/util
+            const filemimeType = req.file.mimetype.split('/')[1]
+            const UPC_ID = product.UPC_ID
+            const filePath = `images/${UPC_ID}/productImageFs-${UPC_ID}.${filemimeType}`
+            product.image = filePath
+            await saveProductImage(req.file.buffer,filePath)
         }
         if (req.body.name) {
             product.name = req.body.name
@@ -633,6 +642,8 @@ exports.readUPCImage = async (req, res, next) => {
         //image path
         const upcPath = path.join('images',`${product.UPC_ID}`,`${product.UPC_ID}.png`)
         //read stream
+        /*Unlike the 16 KiB default highWaterMark for a <stream.Readable>, 
+        the stream returned by this method has a default highWaterMark of 64 KiB. */
         const image = fs.createReadStream(upcPath,
             { highWaterMark: 120000 })//setting buffer size
         
