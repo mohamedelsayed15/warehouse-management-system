@@ -2,15 +2,13 @@ const express = require('express')
 const router = express.Router()
 const adminController = require('../controllers/admin.controller')
 const { adminAuth } = require('../middleware/auth')
-const {upload,upload2} = require('../util/multer')
+const { upload2 } = require('../util/multer')
 const { validateLogin,
     validateIdInParam,
     validateCreateAccount,
     validateProduct,
     validateUPCinParams,
 } = require('../validation/validators')
-const multer = require('multer')
-const multerParser = multer()
 const apicache = require('apicache')
 let cache = apicache.middleware
 

@@ -2,7 +2,8 @@ const { DataTypes } = require('sequelize')
 const sequelize = require('../util/mysql')
 //=============user model==============
 const Product = sequelize.define('product', {
-    UPC_ID: {
+    UPC_ID: {// note that product id is better to be a number 
+            //  as cpu compare numbers faster than strings
         type: DataTypes.STRING,
         primaryKey: true,
         allowNull: false

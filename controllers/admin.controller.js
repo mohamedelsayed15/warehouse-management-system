@@ -562,6 +562,7 @@ exports.getWarehouseProducts = async (req, res, next) => {
 // 15
 exports.searchProducts = async (req, res, next) => {
     try {
+        console.log(req.query)
 
         const limit = 6
 
@@ -574,7 +575,7 @@ exports.searchProducts = async (req, res, next) => {
         const products = await Product.findAndCountAll({
             where: {
                 [Op.or]: [
-                    { id: { [Op.like]: `%${req.query.keyword}%` } },
+                    { UPC_ID: { [Op.like]: `%${req.query.keyword}%` } },
                     { name: { [Op.like]: `%${req.query.keyword}%` } }
                 ]
             },

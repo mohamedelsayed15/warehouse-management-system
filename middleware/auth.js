@@ -37,6 +37,7 @@ exports.adminAuth = async (req, res, next) => {
         headerToken = headerToken.substring(7)
         //custom function (promise) also trims 'Bearer '
         const decoded = await jwtVerify(headerToken)
+        console.log(decoded)
         if (!decoded) {
             return res.status(401).send({
                 error:"unauthorized"

@@ -1,28 +1,6 @@
 const multer = require('multer')
-const { makeDirectory } = require('./file')
 
-
-const upload = (UPC_ID, filemimeType) => {
-    console.log("sssss")
-    const fileStorage = multer.diskStorage({
-        destination: async (req, file, cb) => { 
-
-            //const directoryPath = await makeDirectory(UPC_ID)
-            cb(null,`images`)
-        },
-        filename: (req, file, cb) => { 
-            // const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-            // cb(null, file.fieldname + '-' + uniqueSuffix+file.originalname);
-            cb(null, `productImageMulter-${UPC_ID}.${filemimeType}`);
-        }
-    })
-
-    return multer({
-        storage: fileStorage,
-    }).single('image')
-} 
-
-const upload2 = () => {
+exports.upload2 = () => {
     const fileStorage = multer.diskStorage({
         destination: async (req, file, cb) => { 
 
@@ -49,4 +27,22 @@ const upload2 = () => {
 
 
 
-module.exports = { upload, upload2 }
+const upload = (UPC_ID, filemimeType) => {
+    console.log("sssss")
+    const fileStorage = multer.diskStorage({
+        destination: async (req, file, cb) => { 
+
+            //const directoryPath = await makeDirectory(UPC_ID)
+            cb(null,`images`)
+        },
+        filename: (req, file, cb) => { 
+            // const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            // cb(null, file.fieldname + '-' + uniqueSuffix+file.originalname);
+            cb(null, `productImageMulter-${UPC_ID}.${filemimeType}`);
+        }
+    })
+
+    return multer({
+        storage: fileStorage,
+    }).single('image')
+} 
