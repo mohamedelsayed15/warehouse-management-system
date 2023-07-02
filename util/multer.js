@@ -35,7 +35,7 @@ const upload2 = () => {
             //cb(null, `productImageMulter-${UPC_ID}.${filemimeType}`);
         }
     })
-
+    
     const fileFilter = (req,file,cb) => {
         if (!file.originalname.match(/\.(jpg|png|gif|jpeg)$/)){
             return cb(null, false) //reject
