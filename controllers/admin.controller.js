@@ -2,6 +2,9 @@ const jwt = require('jsonwebtoken')
 const User = require('../models/users.model')
 const { validationResult } = require('express-validator')
 const bcrypt = require('bcryptjs')
+
+const redis = require("redis")
+const client =require("../util/redis")
 const sequelize = require('../util/mysql')
 const WareHouse = require('../models/warehouses.model')
 const Product = require('../models/products.model')
@@ -188,6 +191,7 @@ exports.deactivateUser = async (req, res, next) => {
                 error:"unauthorized"
             })
         }
+
         //prevent deactivation of top admin
         if (user.email === process.env.TOP_ADMIN_EMAIL) {
             return res.status(401).send({
@@ -300,8 +304,6 @@ exports.assignProductToWarehouse = async (req, res, next) => {
 // 9
 exports.addProduct = async (req,res,next) => {
     try {
-        console.log("sssss")
-
         const errors = validationResult(req)
 
         if (!errors.isEmpty()) {
@@ -329,7 +331,12 @@ exports.addProduct = async (req,res,next) => {
             image : filePath,
             //stock: by developer
         })
-
+        await client.connect()
+        const response = await client.set(product.UPC_ID, JSON.stringify(product))
+        const data = await client.get(product.UPC_ID)
+        console.log(JSON.parse(data))
+        //await client.disconnect()
+        console.log(response)
         //create directory for product 
         await makeDirectory(product.UPC_ID)
         //generating upc image code path util/generateupcimage
@@ -351,7 +358,6 @@ exports.addProduct = async (req,res,next) => {
             }
             deleteFile(`images/${product.UPC_ID}/${product.UPC_ID}.png`)
             deleteFile(product.image)
-            console.log(e)
             const error = new Error(e)
             error.httpStatusCode = 500
             return next(error)
