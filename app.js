@@ -89,8 +89,6 @@ WarehouseProduct.belongsTo(Product)
 WareHouse.belongsToMany(Product, { through: WarehouseProduct })
 Product.belongsToMany(WareHouse, { through: WarehouseProduct })
 
-//Many to Many M:N we resolve many to many by a third table
-
 //===============  Sync DB  ============== 
 sequelize.sync()//{force : true}//during development only
     .then(async () => {
@@ -116,5 +114,5 @@ sequelize.sync()//{force : true}//during development only
 
 //=================== listener ======================
 app.listen(process.env.PORT, () => { 
-    console.log(`server is up on 3000`)
+    console.log(`server is up on ${process.env.PORT}`)
 })

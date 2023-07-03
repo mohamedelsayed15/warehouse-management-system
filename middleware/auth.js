@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken')
 const User = require('../models/users.model')
-
+const { redisGetUser, redisSetUser } = require('../util/redis')
+const { id } = require('apicache')
 // custom function turning verify callback into promise
 const jwtVerify = (headerToken) => {
     // trimming is faster than .replace('Bearer ','')
@@ -37,21 +38,31 @@ exports.adminAuth = async (req, res, next) => {
         headerToken = headerToken.substring(7)
         //custom function (promise) also trims 'Bearer '
         const decoded = await jwtVerify(headerToken)
+
         if (!decoded) {
             return res.status(401).send({
                 error:"unauthorized"
             })
         }
-
-        const user = await User.findByPk(decoded.id,{
-            attributes: { exclude: ['password', 'createdAt', 'updatedAt'] },
-        }) 
-        //case there is no user
-        if (!user) {
-            return res.status(401).send({
-                error:"unauthorized"
-            })
+        let user 
+        const cachedUser = await redisGetUser(decoded.id)
+        //console.log(cachedUser)
+        if (cachedUser===null) {
+            user = await User.findByPk(decoded.id,{
+                attributes: { exclude: ['password', 'createdAt', 'updatedAt'] },
+            }) 
+            //case there is no user
+            if (!user) {
+                return res.status(401).send({
+                    error:"unauthorized"
+                })
+            }
+            const cacheUser = await redisSetUser(decoded.id, user)
+            //console.log(cacheUser)
+        } else {
+            user = cachedUser
         }
+
         //case account doesn't have the token
         if (!user.tokens.some(token => token === headerToken)) {
             return res.status(401).send({

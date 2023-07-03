@@ -69,7 +69,6 @@ const saveProductImage = (file,filePath) => {
             { highWaterMark: 6000 })//setting buffer size
 
         writer.write(file);
-        let totalChunk = 0
 
         writer.on('finish', () => {
             resolve('product image created');

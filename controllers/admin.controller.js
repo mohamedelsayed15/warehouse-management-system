@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken')
 const User = require('../models/users.model')
 const { validationResult } = require('express-validator')
 const bcrypt = require('bcryptjs')
+const {redisSetUser} =require("../util/redis")
 const sequelize = require('../util/mysql')
 const WareHouse = require('../models/warehouses.model')
 const Product = require('../models/products.model')
@@ -29,7 +30,7 @@ exports.loginAdmin = async (req, res, next) => {
 
         const user = await User.findOne({
             where: { email: req.body.email },
-            attributes: { exclude: ['type','tokens', 'createdAt', 'updatedAt'] },
+            attributes: { exclude: ['type', 'createdAt', 'updatedAt'] },
         })
 
         if (!user) {
@@ -59,9 +60,14 @@ exports.loginAdmin = async (req, res, next) => {
                 tokens: sequelize.literal(`JSON_ARRAY_APPEND(tokens, '$', "${token}")`)
             },{
                 where: { id: user.id }
-            })
+        })
 
-        user.password = ""
+        user.password=''
+
+        user.tokens.push(token)
+
+        const response = await redisSetUser(user.id, user)
+
         user.tokens = []
 
         res.status(200).send({ user, token })
@@ -188,6 +194,7 @@ exports.deactivateUser = async (req, res, next) => {
                 error:"unauthorized"
             })
         }
+
         //prevent deactivation of top admin
         if (user.email === process.env.TOP_ADMIN_EMAIL) {
             return res.status(401).send({
@@ -300,8 +307,6 @@ exports.assignProductToWarehouse = async (req, res, next) => {
 // 9
 exports.addProduct = async (req,res,next) => {
     try {
-        console.log("sssss")
-
         const errors = validationResult(req)
 
         if (!errors.isEmpty()) {
@@ -329,7 +334,16 @@ exports.addProduct = async (req,res,next) => {
             image : filePath,
             //stock: by developer
         })
-
+        await client.connect()
+        const response = await client.set(product.UPC_ID, JSON.stringify(product))
+        const data = await client.get(product.UPC_ID)
+        console.log(JSON.parse(data))
+        console.log(response)
+        const response1 = await client.set(product.UPC_ID, "JSON.stringify(product)")
+        const data1 = await client.get(product.UPC_ID)
+        console.log(data1)
+        await client.disconnect()
+        console.log(response1)
         //create directory for product 
         await makeDirectory(product.UPC_ID)
         //generating upc image code path util/generateupcimage
@@ -351,7 +365,6 @@ exports.addProduct = async (req,res,next) => {
             }
             deleteFile(`images/${product.UPC_ID}/${product.UPC_ID}.png`)
             deleteFile(product.image)
-            console.log(e)
             const error = new Error(e)
             error.httpStatusCode = 500
             return next(error)
@@ -562,6 +575,7 @@ exports.getWarehouseProducts = async (req, res, next) => {
 // 15
 exports.searchProducts = async (req, res, next) => {
     try {
+        console.log(req.query)
 
         const limit = 6
 
@@ -574,7 +588,7 @@ exports.searchProducts = async (req, res, next) => {
         const products = await Product.findAndCountAll({
             where: {
                 [Op.or]: [
-                    { id: { [Op.like]: `%${req.query.keyword}%` } },
+                    { UPC_ID: { [Op.like]: `%${req.query.keyword}%` } },
                     { name: { [Op.like]: `%${req.query.keyword}%` } }
                 ]
             },
