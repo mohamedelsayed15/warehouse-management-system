@@ -44,51 +44,53 @@ exports.adminAuth = async (req, res, next) => {
                 error:"unauthorized"
             })
         }
-        let user 
-        const cachedUser = await redisGetUser(decoded.id)
-        //console.log(cachedUser)
-        if (cachedUser===null) {
-            user = await User.findByPk(decoded.id,{
-                attributes: { exclude: ['password', 'createdAt', 'updatedAt'] },
-            }) 
+
+        req.user = await redisGetUser(decoded.id)
+
+        if (!req.user) {
+
+            req.user = await User.findByPk(decoded.id)
+
             //case there is no user
-            if (!user) {
+            if (!req.user) {
                 return res.status(401).send({
                     error:"unauthorized"
                 })
             }
-            const cacheUser = await redisSetUser(decoded.id, user)
+            const cacheUser = await redisSetUser(req.user.id, req.user)
             //console.log(cacheUser)
-        } else {
-            user = cachedUser
         }
 
         //case account doesn't have the token
-        if (!user.tokens.some(token => token === headerToken)) {
-            return res.status(401).send({
-                error:"unauthorized"
-            })
-        }
-        //case its not an admin
-        if (user.type !== 'admin') {
-            return res.status(401).send({
-                error:"unauthorized"
-            })
-        }
-        //case account is deactivated
-        if (user.active !== true) {
+        if (!req.user.tokens.some(token => token === headerToken)) {
+            
             return res.status(401).send({
                 error:"unauthorized"
             })
         }
 
-        req.user = user
+        //case its not an admin
+        if (req.user.type !== 'admin') {
+            return res.status(401).send({
+                error:"unauthorized"
+            })
+        }
+
+        //case account is deactivated
+        if (req.user.active !== true) {
+            console.log("not active")
+            return res.status(401).send({
+                error:"unauthorized"
+            })
+        }
+
         req.token = headerToken
 
         next()
 
     } catch (e) {
         console.log(e)
+        console.log("ssssss")
         return res.status(401).send({
             error:"unauthorized"
         })

@@ -90,6 +90,10 @@ WareHouse.belongsToMany(Product, { through: WarehouseProduct })
 Product.belongsToMany(WareHouse, { through: WarehouseProduct })
 
 //===============  Sync DB  ============== 
+const { client } = require("./util/redis")
+client.connect()
+  .then(() => console.log('Connected to Redis'))
+  .catch(err => console.error(err));
 sequelize.sync()//{force : true}//during development only
     .then(async () => {
         // const user = await User.create({
@@ -108,6 +112,7 @@ sequelize.sync()//{force : true}//during development only
         // })
         // const product = await Product.findByPk(1)
         // const addtoWarehouse = await await warehouse.addProduct(product, { through: { quantity: 1 } })
+        //await client.connect()
     }).catch((err) => {
         console.log(err)
     })

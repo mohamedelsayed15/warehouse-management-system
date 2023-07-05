@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken')
 const User = require('../models/users.model')
 const { validationResult } = require('express-validator')
 const bcrypt = require('bcryptjs')
-const {redisSetUser} =require("../util/redis")
+const {redisSetUser, redisGetUser} =require("../util/redis")
 const sequelize = require('../util/mysql')
 const WareHouse = require('../models/warehouses.model')
 const Product = require('../models/products.model')
@@ -30,7 +30,6 @@ exports.loginAdmin = async (req, res, next) => {
 
         const user = await User.findOne({
             where: { email: req.body.email },
-            attributes: { exclude: ['type', 'createdAt', 'updatedAt'] },
         })
 
         if (!user) {
@@ -62,11 +61,15 @@ exports.loginAdmin = async (req, res, next) => {
                 where: { id: user.id }
         })
 
-        user.password=''
+        user.password = ''
 
         user.tokens.push(token)
 
         const response = await redisSetUser(user.id, user)
+
+        const redisuser = await redisGetUser(user.id)
+
+        console.log('controller',redisuser)
 
         user.tokens = []
 
@@ -82,12 +85,25 @@ exports.loginAdmin = async (req, res, next) => {
 // 2
 exports.logoutAdmin = async (req, res, next) => {
     try {
+        
         // Filter the user's tokens array
         await User.update({
             tokens: sequelize.literal(`JSON_REMOVE(tokens, JSON_UNQUOTE(JSON_SEARCH(tokens, 'one', "${req.token}" )))`)
         },{
             where: { id: req.user.id }
         })
+
+        const index = req.user.tokens.findIndex(token => {
+            token === req.token
+        })
+
+        req.user.tokens.splice(index, 1)
+        
+        await redisSetUser(req.user.id, req.user)
+
+        const redisuser = await redisGetUser(req.user.id)
+
+        console.log('controller',redisuser)
 
         res.status(200).send({
             message: "logged out"
@@ -334,18 +350,18 @@ exports.addProduct = async (req,res,next) => {
             image : filePath,
             //stock: by developer
         })
-        await client.connect()
-        const response = await client.set(product.UPC_ID, JSON.stringify(product))
-        const data = await client.get(product.UPC_ID)
-        console.log(JSON.parse(data))
-        console.log(response)
-        const response1 = await client.set(product.UPC_ID, "JSON.stringify(product)")
-        const data1 = await client.get(product.UPC_ID)
-        console.log(data1)
-        await client.disconnect()
-        console.log(response1)
-        //create directory for product 
-        await makeDirectory(product.UPC_ID)
+        // await client.connect()
+        // const response = await client.set(product.UPC_ID, JSON.stringify(product))
+        // const data = await client.get(product.UPC_ID)
+        // console.log(JSON.parse(data))
+        // console.log(response)
+        // const response1 = await client.set(product.UPC_ID, "JSON.stringify(product)")
+        // const data1 = await client.get(product.UPC_ID)
+        // console.log(data1)
+        // await client.disconnect()
+        // console.log(response1)
+        // //create directory for product 
+        // await makeDirectory(product.UPC_ID)
         //generating upc image code path util/generateupcimage
         //save image into the file system
 
@@ -532,6 +548,12 @@ exports.viewOrder = async (req,res,next) => {
     try {
 
         const order = await Order.findByPk(req.params.orderId)
+
+        if (!order) {
+            return res.status(404).json({
+                    error: "couldn't find the specified order"
+                })
+        }
 
         const orderProducts = await order.getProducts()
 
